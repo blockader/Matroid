@@ -29,14 +29,26 @@ if [ $os == Darwin ]; then
     fi
     cat ~/Library/Application\ Support/qmk/qmk.ini | awk '{if($1=="qmk_home")print$1" "$2" '"$path"/qmk_firmware'";else print$0}' > /tmp/qmk.ini
     cp /tmp/qmk.ini ~/Library/Application\ Support/qmk/qmk.ini
+else
+    echo $os is not a supported OS.
+    exit 1
 fi
 qmk compile -kb $alias -km blockader
 if [ $keyboard == matrix_noah ]; then
     echo The firmware for Matrix Noah can\'t be automatically uploaded. You need to write a new bootloader for that.
-    for i in {0..9}; do
-        echo -ne Please reset your keyboard by pressing the top-left key while plugging in the wire. The firmware uploading will start in $((10-$i)) seconds." \r"
-        sleep 1
-    done
-    echo Please reset your keyboard by pressing the top-left key while plugging in the wire. The firmware uploading will start in 0 seconds.
-    cp "$path"/qmk_firmware/`echo $alias|tr / _`_blockader.bin /Volumes/NOAH\ BOOT/FIRMWARE.BIN
+    echo Please reset your keyboard by pressing the top-left key while plugging in the wire.
+    if [ $os == Darwin ]; then
+        while true; do
+            if [ -f /Volumes/NOAH\ BOOT/FIRMWARE.BIN ]; then
+                break
+            fi
+            sleep 0.1
+        done
+        cp "$path"/qmk_firmware/`echo $alias|tr / _`_blockader.bin /Volumes/NOAH\ BOOT/FIRMWARE.BIN
+    else
+        echo $os is not a supported OS.
+        exit 1
+    fi
+else
+    echo $1 is not a supported keyboard.
 fi
