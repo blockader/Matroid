@@ -891,7 +891,7 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
     char buffer[16], reply[RAW_EPSIZE];
     memset(reply, 0, RAW_EPSIZE);
     if (sscanf((char *)data, "%d%d%s", &this_id, &parent_id, buffer) != 3)
-        sprintf(reply, "%d %d %s", timer_read(), -1, "confusion");
+        sprintf(reply, "%d %d %s", timer_read(), this_id, "confusion");
     else if (!strcmp(buffer, "heartbeat"))
         sprintf(reply, "%d %d %s", timer_read(), this_id, "heartbeat");
     else if (!strcmp(buffer, "handness")) {

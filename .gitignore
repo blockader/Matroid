@@ -8,3 +8,4 @@ moc_*.h
 ui_*.h
 ltmain.sh
 *.o
+*.autosave

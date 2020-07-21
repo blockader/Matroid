@@ -2,3 +2,7 @@
 	path = keyboard/qmk_firmware
 	url = git@github.com:blockader/qmk_firmware.git
 	branch = matroid
+[submodule "computer/hidapi"]
+	path = computer/hidapi
+	url = git@github.com:blockader/hidapi.git
+	branch = matroid
