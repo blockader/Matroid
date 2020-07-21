@@ -1,0 +1,4 @@
+[submodule "keyboard/qmk_firmware"]
+	path = keyboard/qmk_firmware
+	url = git@github.com:blockader/qmk_firmware.git
+	branch = matroid
