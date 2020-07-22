@@ -8,6 +8,7 @@ import time
 import subprocess
 import os
 import datetime
+import pyperclip
 from PyQt5 import QtCore, QtGui, QtWidgets
 if sys.platform == 'darwin':
     import pync
@@ -17,8 +18,12 @@ if sys.platform not in ['darwin']:
     print('%s is not a supported OS.' % sys.platform)
 
 
+sys.stdout = open('/tmp/matroid_computer.log', 'w')
+
+
 def log(*m):
     print(datetime.datetime.now().strftime("%Y %m %d %H:%M:%S:%f"), *m)
+    sys.stdout.flush()
 
 
 def notify(*m):
@@ -204,6 +209,16 @@ def review():
 review_timer = QtCore.QTimer()
 review_timer.timeout.connect(review)
 review_timer.start(1000)
+
+
+def minutely_routine():
+    pyperclip.copy('')
+    notify('The clipboard is cleared.')
+
+
+minutely_routine_timer = QtCore.QTimer()
+minutely_routine_timer.timeout.connect(minutely_routine)
+minutely_routine_timer.start(60000)
 
 
 tray = QtWidgets.QSystemTrayIcon()

@@ -14,7 +14,7 @@ if [ ! -d "$path"/python ]; then
     python3 -m pip install virtualenv --user 
     python3 -m virtualenv -p python3 "$path"/python
     source "$path"/python/bin/activate
-    pip install hidapi easydict
+    pip install hidapi easydict pyperclip
     if [ $os == "Darwin" ]; then
         if [ -z "`pip show py2app`" ]; then  
             pip install py2app
@@ -31,7 +31,7 @@ set +e
 pkill "Matroid Computer"
 python setup.py py2app -A
 set -e
-defaults write `mdls -name kMDItemCFBundleIdentifier dist/Matroid\ Computer.app|cut -d' ' -f3|tr '"' ' '` NSAppSleepDisabled -bool YES
+defaults write org.pythonmac.unspecified.MatroidComputer NSAppSleepDisabled -bool YES
 cd swim
 swift build -c release
 cd ..
