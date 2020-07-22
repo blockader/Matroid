@@ -34,7 +34,7 @@ enum OS {
 };
 
 struct {
-    bool ended, handness_enabled, slave;
+    bool ended, handness_enabled, backlight_enabled, slave;
     int8_t last_nonspace_handness, modifier_handness;
     uint8_t os;
     int last_nonspace_time;
@@ -106,6 +106,26 @@ void handle_message(struct message *m) {
                         (int)common_layer_data.handness_enabled);
             else {
                 common_layer_data.handness_enabled = v;
+                m->arguments = "success";
+            }
+            send_message(m);
+        }
+    } else if (!strcmp(m->command, "backlight")) {
+        int v;
+        if (sscanf(m->arguments, "%d", &v) != 1 || v < -1 || v > 1) {
+            m->command = "confusion";
+            m->arguments[0] = 0;
+            send_message(m);
+        } else {
+            if (v == -1)
+                sprintf(m->arguments, "%d",
+                        (int)common_layer_data.backlight_enabled);
+            else {
+                common_layer_data.backlight_enabled = v;
+                if (v)
+                    rgb_matrix_enable();
+                else
+                    rgb_matrix_disable();
                 m->arguments = "success";
             }
             send_message(m);

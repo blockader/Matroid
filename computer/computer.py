@@ -41,6 +41,8 @@ keyboards = [
         heartbeat_session_id_mutex=QtCore.QMutex(),
         handness_session_id=-1,
         handness_session_id_mutex=QtCore.QMutex(),
+        backlight_session_id=-1,
+        backlight_session_id_mutex=QtCore.QMutex(),
         actions=easydict.EasyDict()
     )
 ]
@@ -105,6 +107,21 @@ def handle_message(k, m):
                         k.handness_session_id = -1
                 else:
                     log('%s: This handness isn\'t expected.' % k.name)
+    elif m.command == 'backlight':
+        if len(m.arguments) != 1:
+            log('%s: This backlight is corrupted.' % k.name)
+        elif m.arguments[0].isdigit():
+            k.actions.keyboard_backlight_action.setChecked(int(m.arguments[0]))
+        else:
+            with QtCore.QMutexLocker(k.backlight_session_id_mutex):
+                if k.backlight_session_id == m.session_id:
+                    if m.arguments[0] != 'success':
+                        k.backlight_session_id = -2
+                        log('%s: This backlight isn\'t successful.' % k.name)
+                    else:
+                        k.backlight_session_id = -1
+                else:
+                    log('%s: This backlight isn\'t expected.' % k.name)
     else:
         return False
     return True
@@ -138,9 +155,14 @@ def receive_messages():
                         log('%s: This messages can\'t be recognized.' % k.name)
 
 
+receive_messages_thread = QtCore.QThread()
 receive_messages_timer = QtCore.QTimer()
+receive_messages_timer.moveToThread(receive_messages_thread)
 receive_messages_timer.timeout.connect(receive_messages)
-receive_messages_timer.start(5)
+receive_messages_timer.setInterval(5)
+receive_messages_thread.started.connect(
+    receive_messages_timer.start)
+receive_messages_thread.start()
 
 
 def review():
@@ -166,6 +188,8 @@ def review():
                     notify('%s: %s is detected.' % (k.name, k.name))
                     send_message(k, easydict.EasyDict(
                         session_id=int(time.time()), command='handness', arguments=[-1]))
+                    send_message(k, easydict.EasyDict(
+                        session_id=int(time.time()), command='backlight', arguments=[-1]))
                     break
                 except OSError:
                     pass
@@ -189,10 +213,28 @@ tray_menu = QtWidgets.QMenu()
 for k in keyboards:
     keyboard_menu = QtWidgets.QMenu(k.name)
     keyboard_handness_action = QtWidgets.QAction('Handness', checkable=True)
-    keyboard_handness_action.toggled.connect(lambda checked: send_message(k, easydict.EasyDict(
-        session_id=int(time.time()), command='handness', arguments=[int(checked)])))
+
+    def toggle_handness(checked):
+        with QtCore.QMutexLocker(k.handness_session_id_mutex):
+            k.handness_session_id = int(time.time())
+            send_message(k, easydict.EasyDict(
+                session_id=k.handness_session_id, command='handness', arguments=[int(checked)]))
+        return
+        time.sleep(0.1)
+        with QtCore.QMutexLocker(k.handness_session_id_mutex):
+            if k.handness_session_id == -1:
+                notify('%s: Handness is now %s.' %
+                       (k.name, 'on' if checked else 'off'))
+            else:
+                notify('%s: Handness can\'t be changed.' % k.name)
+    keyboard_handness_action.toggled.connect(toggle_handness)
     keyboard_menu.addAction(keyboard_handness_action)
     k.actions.keyboard_handness_action = keyboard_handness_action
+    keyboard_backlight_action = QtWidgets.QAction('Backlight', checkable=True)
+    keyboard_backlight_action.toggled.connect(lambda checked: send_message(k, easydict.EasyDict(
+        session_id=int(time.time()), command='backlight', arguments=[int(checked)])))
+    keyboard_menu.addAction(keyboard_backlight_action)
+    k.actions.keyboard_backlight_action = keyboard_backlight_action
     tray_menu.addMenu(keyboard_menu)
 tray_quit_action = QtWidgets.QAction('Quit')
 tray_quit_action.triggered.connect(app.quit)
