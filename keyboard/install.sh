@@ -20,8 +20,8 @@ else
     echo $os is not a supported OS.
     exit 1
 fi
-path=`realpath $0`
-path=`dirname $path`
+path=`realpath "$0"`
+path=`dirname "$path"`
 if [ $os == Darwin ]; then
     if [ ! -f ~/Library/Application\ Support/qmk/qmk.ini ]; then
         echo QMK\'s config can\'t be detected. Are you sure that you have installed it?

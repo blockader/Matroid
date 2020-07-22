@@ -1,8 +1,8 @@
 #include QMK_KEYBOARD_H
-#include <stdio.h>
-#include <string.h>
 #include "raw_hid.h"
 #include "usb_descriptor.h"
+#include <stdio.h>
+#include <string.h>
 
 enum {
     LAYER_NORM_BASE,
@@ -75,6 +75,59 @@ enum custom_keycodes {
     KEY_CUT_LINE,
     KEY_CUT_SELECTION,
 };
+
+struct message {
+    int session_id;
+    char *command, *arguments;
+};
+
+void send_message(const struct message *m) {
+    char b[RAW_EPSIZE + 1];
+    memset(b, 0, RAW_EPSIZE + 1);
+    if (m->arguments[0])
+        sprintf(b, "%d %s %s", m->session_id, m->command, m->arguments);
+    else
+        sprintf(b, "%d %s", m->session_id, m->command);
+    raw_hid_send((uint8_t *)b, RAW_EPSIZE);
+}
+
+void handle_message(struct message *m) {
+    if (!strcmp(m->command, "heartbeat"))
+        send_message(m);
+    else if (!strcmp(m->command, "handness")) {
+        int v;
+        if (sscanf(m->arguments, "%d", &v) != 1) {
+            m->command = "confusion";
+            m->arguments[0] = 0;
+            send_message(m);
+        } else {
+            common_layer_data.handness_enabled = v;
+            m->arguments = "success";
+            send_message(m);
+        }
+    } else {
+        m->command = "confusion";
+        m->arguments[0] = 0;
+        send_message(m);
+    }
+}
+
+void raw_hid_receive(uint8_t *data, uint8_t length) {
+    struct message m;
+    char c[RAW_EPSIZE + 1], a[RAW_EPSIZE + 1];
+    m.command = c;
+    m.arguments = a;
+    if (sscanf((char *)data, "%d%s%s", &m.session_id, c, a) == 3)
+        handle_message(&m);
+    else if (sscanf((char *)data, "%d%s", &m.session_id, c) == 2) {
+        a[0] = 0;
+        handle_message(&m);
+    } else {
+        m.command = "confusion";
+        a[0] = 0;
+        send_message(&m);
+    }
+}
 
 extern const int8_t handness[MATRIX_ROWS][MATRIX_COLS];
 
@@ -561,11 +614,13 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
 
 void handle_layer_start(uint16_t key, keyrecord_t *record) {
     rgblight_disable_noeeprom();
+    struct message m;
     switch (layers[layers[0] + 1]) {
     case LAYER_RACE_BASE:
-        tap_code16(LGUI(KC_SPACE));
-        SEND_STRING("25005380");
-        tap_code(KC_ENT);
+        m.session_id = timer_read();
+        m.command = "language";
+        m.arguments = "english";
+        send_message(&m);
     case LAYER_RACE_EXTENSION:
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_BLUE);
@@ -884,28 +939,4 @@ bool process_record_user(uint16_t key, keyrecord_t *record) {
 void keyboard_post_init_user() {
     rgblight_disable_noeeprom();
     rgb_matrix_disable();
-}
-
-void raw_hid_receive(uint8_t *data, uint8_t length) {
-    int this_id, parent_id;
-    char buffer[16], reply[RAW_EPSIZE];
-    memset(reply, 0, RAW_EPSIZE);
-    if (sscanf((char *)data, "%d%d%s", &this_id, &parent_id, buffer) != 3)
-        sprintf(reply, "%d %d %s", timer_read(), this_id, "confusion");
-    else if (!strcmp(buffer, "heartbeat"))
-        sprintf(reply, "%d %d %s", timer_read(), this_id, "heartbeat");
-    else if (!strcmp(buffer, "handness")) {
-        int v;
-        if (sscanf((char *)data, "%d%d%s%d", &this_id, &parent_id, buffer, &v) !=
-            4)
-            sprintf(reply, "%d %d %s", timer_read(), this_id,
-                    "confusion");
-        else {
-            sprintf(reply, "%d %d %s", timer_read(), this_id,
-                    "success");
-            common_layer_data.handness_enabled = v;
-        }
-    } else
-        sprintf(reply, "%d %d %s", timer_read(), this_id, "confusion");
-    raw_hid_send((uint8_t *)reply, length);
 }

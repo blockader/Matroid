@@ -6,3 +6,7 @@
 	path = computer/hidapi
 	url = git@github.com:blockader/hidapi.git
 	branch = matroid
+[submodule "computer/swim"]
+	path = computer/swim
+	url = git@github.com:blockader/swim.git
+	branch = matroid
