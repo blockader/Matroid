@@ -27,9 +27,13 @@ fi
 source "$path"/python/bin/activate
 pushd $path
 rm -rf build dist
+set +e
+pkill "Matroid Computer"
 python setup.py py2app -A
+set -e
 defaults write `mdls -name kMDItemCFBundleIdentifier dist/Matroid\ Computer.app|cut -d' ' -f3|tr '"' ' '` NSAppSleepDisabled -bool YES
 cd swim
 swift build -c release
 cd ..
+open dist/Matroid\ Computer.app
 popd $path
