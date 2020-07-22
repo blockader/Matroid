@@ -27,6 +27,9 @@ def notify(*m):
     log(*m)
 
 
+path = os.path.dirname(sys.argv[0])
+
+
 keyboards = [
     easydict.EasyDict(
         name='Matrix Noah',
@@ -37,7 +40,8 @@ keyboards = [
         heartbeat_session_id=-1,
         heartbeat_session_id_mutex=QtCore.QMutex(),
         handness_session_id=-1,
-        handness_session_id_mutex=QtCore.QMutex()
+        handness_session_id_mutex=QtCore.QMutex(),
+        actions=easydict.EasyDict()
     )
 ]
 
@@ -82,21 +86,25 @@ def handle_message(k, m):
             notify('%s: The language switching failed due to an illegal message format.' %
                    k.name)
         else:
-            path = os.path.dirname(sys.argv[0])
             if subprocess.call([path+'/swim/.build/release/swim',
                                 'use', languages[m.arguments[0]]]):
                 notify('%s: The language switching failed due to failure on calling swim.' %
                        k.name)
     elif m.command == 'handness':
-        with QtCore.QMutexLocker(k.handness_session_id_mutex):
-            if k.handness_session_id == m.session_id:
-                if len(m.arguments) != 1 or m.arguments[0] != 'success':
-                    k.handness_session_id = -2
-                    log('%s: This handness isn\'t successful.' % k.name)
+        if len(m.arguments) != 1:
+            log('%s: This handness is corrupted.' % k.name)
+        elif m.arguments[0].isdigit():
+            k.actions.keyboard_handness_action.setChecked(int(m.arguments[0]))
+        else:
+            with QtCore.QMutexLocker(k.handness_session_id_mutex):
+                if k.handness_session_id == m.session_id:
+                    if m.arguments[0] != 'success':
+                        k.handness_session_id = -2
+                        log('%s: This handness isn\'t successful.' % k.name)
+                    else:
+                        k.handness_session_id = -1
                 else:
-                    k.handness_session_id = -1
-            else:
-                log('%s: This handness isn\'t expected.' % k.name)
+                    log('%s: This handness isn\'t expected.' % k.name)
     else:
         return False
     return True
@@ -104,30 +112,30 @@ def handle_message(k, m):
 
 def receive_messages():
     for k in keyboards:
-        with QtCore.QMutexLocker(k.interface_mutex):
-            if k.interface:
-                while True:
-                    try:
+        if k.interface:
+            while True:
+                try:
+                    with QtCore.QMutexLocker(k.interface_mutex):
                         m = k.interface.read(32)
+                except:
+                    log('%s: Messages may not be received.' % k.name)
+                    m = []
+                if not m:
+                    break
+                while m and m[-1] == 0:
+                    m.pop(-1)
+                if m:
+                    m = ''.join([chr(c)for c in m])
+                    log('%s: "%s" is being received.' % (k.name, m))
+                    m = m.split()
+                    try:
+                        m = easydict.EasyDict(
+                            session_id=int(m[0]), command=m[1], arguments=m[2:])
                     except:
-                        log('%s: Messages may not be received.' % k.name)
-                        m = []
-                    if not m:
-                        break
-                    while m and m[-1] == 0:
-                        m.pop(-1)
-                    if m:
-                        m = ''.join([chr(c)for c in m])
-                        log('%s: "%s" is being received.' % (k.name, m))
-                        m = m.split()
-                        try:
-                            m = easydict.EasyDict(
-                                session_id=int(m[0]), command=m[1], arguments=m[2:])
-                        except:
-                            log('%s: This messages is corrupted.' % k.name)
-                            continue
-                        if not handle_message(k, m):
-                            log('%s: This messages can\'t be recognized.' % k.name)
+                        log('%s: This messages is corrupted.' % k.name)
+                        continue
+                    if not handle_message(k, m):
+                        log('%s: This messages can\'t be recognized.' % k.name)
 
 
 receive_messages_timer = QtCore.QTimer()
@@ -156,6 +164,8 @@ def review():
                         d.set_nonblocking(1)
                         k.interface = d
                     notify('%s: %s is detected.' % (k.name, k.name))
+                    send_message(k, easydict.EasyDict(
+                        session_id=int(time.time()), command='handness', arguments=[-1]))
                     break
                 except OSError:
                     pass
@@ -170,6 +180,24 @@ def review():
 review_timer = QtCore.QTimer()
 review_timer.timeout.connect(review)
 review_timer.start(1000)
+
+
+tray = QtWidgets.QSystemTrayIcon()
+tray.setIcon(QtGui.QIcon(path + '/icon.png'))
+tray.setVisible(True)
+tray_menu = QtWidgets.QMenu()
+for k in keyboards:
+    keyboard_menu = QtWidgets.QMenu(k.name)
+    keyboard_handness_action = QtWidgets.QAction('Handness', checkable=True)
+    keyboard_handness_action.toggled.connect(lambda checked: send_message(k, easydict.EasyDict(
+        session_id=int(time.time()), command='handness', arguments=[int(checked)])))
+    keyboard_menu.addAction(keyboard_handness_action)
+    k.actions.keyboard_handness_action = keyboard_handness_action
+    tray_menu.addMenu(keyboard_menu)
+tray_quit_action = QtWidgets.QAction('Quit')
+tray_quit_action.triggered.connect(app.quit)
+tray_menu.addAction(tray_quit_action)
+tray.setContextMenu(tray_menu)
 
 
 app.exec_()

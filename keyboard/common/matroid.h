@@ -96,13 +96,18 @@ void handle_message(struct message *m) {
         send_message(m);
     else if (!strcmp(m->command, "handness")) {
         int v;
-        if (sscanf(m->arguments, "%d", &v) != 1) {
+        if (sscanf(m->arguments, "%d", &v) != 1 || v < -1 || v > 1) {
             m->command = "confusion";
             m->arguments[0] = 0;
             send_message(m);
         } else {
-            common_layer_data.handness_enabled = v;
-            m->arguments = "success";
+            if (v == -1)
+                sprintf(m->arguments, "%d",
+                        (int)common_layer_data.handness_enabled);
+            else {
+                common_layer_data.handness_enabled = v;
+                m->arguments = "success";
+            }
             send_message(m);
         }
     } else {
