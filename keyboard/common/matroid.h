@@ -763,30 +763,133 @@ bool handle_call_key(uint16_t key, keyrecord_t *record) {
     return true;
 }
 
+uint8_t unregister_shift(void) {
+    uint8_t s = 0;
+    if (get_mods() & MOD_BIT(KC_LSFT)) {
+        unregister_code(KC_LSFT);
+        s = 1;
+    }
+    if (get_mods() & MOD_BIT(KC_RSFT)) {
+        unregister_code(KC_RSFT);
+        s += 2;
+    }
+    return s;
+}
+
+void register_shift(uint8_t s) {
+    if (s & 1)
+        register_code(KC_LSFT);
+    if (s & 2)
+        register_code(KC_RSFT);
+}
+
 bool handle_common_key(uint16_t key, keyrecord_t *record) {
     switch (key) {
-    case KC_GRAVE:
+    case KC_HASH:
         if (record->event.pressed) {
-            if (get_mods() & MOD_MASK_SHIFT)
-                tap_code16(LGUI(LSFT(KC_4)));
-            else
-                tap_code(KC_GRAVE);
+            uint8_t s = unregister_shift();
+            if (s) {
+                handle_call_key(SAFE_RANGE + LAYER_WINDOW, record);
+                register_shift(s);
+            } else
+                tap_code16(KC_HASH);
         }
         return false;
     case KC_1:
         if (record->event.pressed) {
-            if (get_mods() & MOD_MASK_SHIFT)
-                tap_code16(KC_AT);
-            else
+            uint8_t s = unregister_shift();
+            if (s) {
+                tap_code16(LOPT(KC_SPC));
+                register_shift(s);
+            } else
                 tap_code(KC_1);
         }
         return false;
     case KC_2:
         if (record->event.pressed) {
-            if (get_mods() & MOD_MASK_SHIFT)
-                tap_code16(KC_TILD);
-            else
+            uint8_t s = unregister_shift();
+            if (s) {
+                tap_code16(LCTL(KC_SPC));
+                register_shift(s);
+            } else
                 tap_code(KC_2);
+        }
+        return false;
+    case KC_3:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s) {
+                tap_code(KC_GRAVE);
+                register_shift(s);
+            } else
+                tap_code(KC_3);
+        }
+        return false;
+    case KC_4:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s)
+                ;
+            else
+                tap_code(KC_4);
+        }
+        return false;
+    case KC_5:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s)
+                ;
+            else
+                tap_code(KC_5);
+        }
+        return false;
+    case KC_6:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s)
+                ;
+            else
+                tap_code(KC_6);
+        }
+        return false;
+
+    case KC_7:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s)
+                ;
+            else
+                tap_code(KC_7);
+        }
+        return false;
+    case KC_8:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s) {
+                tap_code(KC_ESC);
+                register_shift(s);
+            } else
+                tap_code(KC_8);
+        }
+        return false;
+    case KC_9:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s) {
+                tap_code16(LGUI(LSFT(KC_4)));
+                register_shift(s);
+            } else
+                tap_code(KC_9);
+        }
+        return false;
+    case KC_0:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s) {
+                tap_code(KC_MPLY);
+                register_shift(s);
+            } else
+                tap_code(KC_0);
         }
         return false;
     case KEY_INSERT_LINE_START:
