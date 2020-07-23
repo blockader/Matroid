@@ -11,3 +11,13 @@ This code compiles and installs the firmware, handling all details.
 This code implements a GUI keyboard manager using PyQt.
 ## computer/install.h
 This code installs the keyboard manager, handling all details.
+# My Favourite Keyboards
+## New Poker
+![New Poker](keyboard/poker/keyboard.jpg)
+There are several versions of Poker. My one is New Poker and the picture above is New Poker II. The New Poker seems to have the most freedom in customizing the keymap. However, I replaced its PCB with a DZ60 with QMK support in the end.
+## Matrix Noah
+![Matrix Noah](keyboard/matrix_noah/keyboard.jpg)
+I am very lucky to have a Matrix Noah with an old version of PCB which supports split spacebar. I tried different keymaps to make my thumbs more useful in typing with split spacebar, although I am not sure if they actually worked. I am showing a white one but I have a black one.
+## Canoe Gen2
+![Canoe Gen2](keyboard/canoe_gen2/keyboard.jpg)
+I am still waiting for the shipment. It's hard to modify it for split spacebar, which is the reason I am not using split spacebar for other functions anymore.
