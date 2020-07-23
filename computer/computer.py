@@ -10,12 +10,6 @@ import os
 import datetime
 import pyperclip
 from PyQt5 import QtCore, QtGui, QtWidgets
-if sys.platform == 'darwin':
-    import pync
-
-
-if sys.platform not in ['darwin']:
-    print('%s is not a supported OS.' % sys.platform)
 
 
 if '--debug' not in sys.argv:
@@ -29,9 +23,18 @@ def log(*m):
         sys.stdout.flush()
 
 
+if sys.platform == 'darwin':
+    import pync
+else:
+    log('%s is not a supported OS.' % sys.platform)
+    exit(-1)
+
+
 def notify(*m):
     if sys.platform == 'darwin':
         pync.notify(' '.join(m))
+    else:
+        log('%s is not a supported OS.' % sys.platform)
     log(*m)
 
 
@@ -51,7 +54,9 @@ keyboards = [
         handness_session_id_mutex=QtCore.QMutex(),
         backlight_session_id=-1,
         backlight_session_id_mutex=QtCore.QMutex(),
-        actions=easydict.EasyDict()
+        menu=None,
+        actions=easydict.EasyDict(),
+        actions_mutex=QtCore.QMutex()
     )
 ]
 
@@ -115,11 +120,14 @@ def handle_message(k, m):
                                 'use', languages[m.arguments[0]]]):
                 notify('%s: The language switching failed due to failure on calling swim.' %
                        k.name)
+            else:
+                notify('%s: The language is now %s.' %
+                       (k.name, m.arguments[0]))
     elif m.command == 'handness':
         if len(m.arguments) != 1:
             log('%s: This handness is corrupted.' % k.name)
         elif m.arguments[0].isdigit():
-            k.actions.keyboard_handness_action.setChecked(int(m.arguments[0]))
+            k.actions.handness_action.setChecked(int(m.arguments[0]))
         else:
             with QtCore.QMutexLocker(k.handness_session_id_mutex):
                 if k.handness_session_id == m.session_id:
@@ -134,7 +142,7 @@ def handle_message(k, m):
         if len(m.arguments) != 1:
             log('%s: This backlight is corrupted.' % k.name)
         elif m.arguments[0].isdigit():
-            k.actions.keyboard_backlight_action.setChecked(int(m.arguments[0]))
+            k.actions.backlight_action.setChecked(int(m.arguments[0]))
         else:
             with QtCore.QMutexLocker(k.backlight_session_id_mutex):
                 if k.backlight_session_id == m.session_id:
@@ -192,6 +200,7 @@ def review():
                     with QtCore.QMutexLocker(k.interface_mutex):
                         k.interface.close()
                         k.interface = None
+                    k.menu.setEnabled(False)
                 else:
                     log('%s: %s is alive.' % (k.name, k.name))
         else:
@@ -203,10 +212,12 @@ def review():
                         d.set_nonblocking(1)
                         k.interface = d
                     notify('%s: %s is detected.' % (k.name, k.name))
-                    send_message(k, easydict.EasyDict(
-                        session_id=int(time.time()), command='handness', arguments=[-1]))
-                    send_message(k, easydict.EasyDict(
-                        session_id=int(time.time()), command='backlight', arguments=[-1]))
+                    with QtCore.QMutexLocker(k.actions_mutex):
+                        send_message(k, easydict.EasyDict(
+                            session_id=int(time.time()), command='handness', arguments=[1 if k.actions.handness_action.isChecked() else 0]))
+                        send_message(k, easydict.EasyDict(
+                            session_id=int(time.time()), command='backlight', arguments=[1 if k.actions.backlight_action.isChecked() else 0]))
+                    k.menu.setEnabled(True)
                     break
                 except OSError:
                     pass
@@ -245,6 +256,8 @@ def hourly_routine():
 break_dialog = QtWidgets.QMessageBox()
 break_dialog.setInformativeText(
     'You should take a break and relax your body and mind.')
+break_dialog.setWindowFlags(
+    QtCore.Qt.WindowStaysOnTopHint)
 
 
 def show_break_dialog():
@@ -278,6 +291,8 @@ tray.setVisible(True)
 tray_menu = QtWidgets.QMenu()
 for k in keyboards:
     keyboard_menu = QtWidgets.QMenu(k.name)
+    keyboard_menu.setEnabled(False)
+    k.menu = keyboard_menu
     keyboard_handness_action = QtWidgets.QAction('Handness', checkable=True)
 
     def toggle_handness(checked):
@@ -294,7 +309,7 @@ for k in keyboards:
                 notify('%s: Handness can\'t be changed.' % k.name)
     keyboard_handness_action.toggled.connect(toggle_handness)
     keyboard_menu.addAction(keyboard_handness_action)
-    k.actions.keyboard_handness_action = keyboard_handness_action
+    k.actions.handness_action = keyboard_handness_action
     keyboard_backlight_action = QtWidgets.QAction('Backlight', checkable=True)
 
     def toggle_backlight(checked):
@@ -311,7 +326,7 @@ for k in keyboards:
                 notify('%s: Backlight can\'t be changed.' % k.name)
     keyboard_backlight_action.toggled.connect(toggle_backlight)
     keyboard_menu.addAction(keyboard_backlight_action)
-    k.actions.keyboard_backlight_action = keyboard_backlight_action
+    k.actions.backlight_action = keyboard_backlight_action
     tray_menu.addMenu(keyboard_menu)
 tray_quit_action = QtWidgets.QAction('Quit')
 tray_quit_action.triggered.connect(app.quit)

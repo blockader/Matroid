@@ -23,10 +23,14 @@ fi
 path=`realpath "$0"`
 path=`dirname "$path"`
 if [ $os == Darwin ]; then
-    if [ ! -f ~/Library/Application\ Support/qmk/qmk.ini ]; then
-        echo QMK\'s config can\'t be detected. Are you sure that you have installed it?
-        exit 1
-    fi
+    while true; do
+        if [ ! -f ~/Library/Application\ Support/qmk/qmk.ini ]; then
+            echo QMK\'s config can\'t be detected. Please install QMK first. It is not necessary to configure anything.
+            python3 -c "input()"
+        else
+            break
+        fi
+    done
     cat ~/Library/Application\ Support/qmk/qmk.ini | awk '{if($1=="qmk_home")print$1" "$2" '"$path"/qmk_firmware'";else print$0}' > /tmp/qmk.ini
     cp /tmp/qmk.ini ~/Library/Application\ Support/qmk/qmk.ini
 else
@@ -51,4 +55,12 @@ if [ $keyboard == matrix_noah ]; then
     fi
 else
     echo $1 is not a supported keyboard.
+fi
+if [ $os == Darwin ]; then
+    echo Please turn off key repeat in System Preferences as it will be handled by the firmware now.
+    echo It seems that you can only make it slow but you can\'t turn it off in the current vision of MacOS.
+    python3 -c "input()"
+else
+    echo $os is not a supported OS.
+    exit 1
 fi

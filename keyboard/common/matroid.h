@@ -37,7 +37,8 @@ struct {
     bool ended, handness_enabled, backlight_enabled, slave;
     int8_t last_nonspace_handness, modifier_handness;
     uint8_t os;
-    int last_nonspace_time;
+    uint16_t last_repeat_key;
+    int last_nonspace_time, last_repeat_time, last_repeat_interval;
 } common_layer_data;
 
 struct {
@@ -889,7 +890,7 @@ bool handle_handness_start(uint16_t key, keyrecord_t *record) {
             if (handness[record->event.key.row][record->event.key.col] *
                     common_layer_data.modifier_handness >
                 0) {
-                bool ignore = key == KC_BSPC;
+                bool ignore = false;
                 if (get_mods() & MOD_MASK_GUI) {
                     switch (key) {
                     case KC_A:
@@ -949,6 +950,43 @@ bool handle_handness_end(uint16_t key, keyrecord_t *record) {
     return true;
 }
 
+bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
+    if (record->event.pressed) {
+        switch (key) {
+        case KC_BSPC:
+        case KC_UP:
+        case KC_DOWN:
+        case KC_LEFT:
+        case KC_RIGHT:
+        case LALT(KC_LEFT):
+        case LALT(KC_RIGHT):
+        case LGUI(KC_Z):
+        case LGUI(KC_V):
+            common_layer_data.last_repeat_key = key;
+            common_layer_data.last_repeat_time = timer_read();
+            common_layer_data.last_repeat_interval = 1000;
+            break;
+        case KC_Z:
+        case KC_V:
+            if (get_mods() & MOD_MASK_GUI) {
+                common_layer_data.last_repeat_key = key;
+                common_layer_data.last_repeat_time = timer_read();
+                common_layer_data.last_repeat_interval = 1000;
+            } else
+                common_layer_data.last_repeat_key = 0;
+            break;
+        default:
+            common_layer_data.last_repeat_key = 0;
+        }
+    } else if (common_layer_data.last_repeat_key == key)
+        common_layer_data.last_repeat_key = 0;
+    else if ((common_layer_data.last_repeat_key == KC_Z ||
+              common_layer_data.last_repeat_key == KC_V) &&
+             (key == KC_LGUI || key == KC_RGUI))
+        common_layer_data.last_repeat_key = 0;
+    return true;
+}
+
 bool process_record_user(uint16_t key, keyrecord_t *record) {
     if (!handle_handness_start(key, record))
         return false;
@@ -958,10 +996,26 @@ bool process_record_user(uint16_t key, keyrecord_t *record) {
         return false;
     if (!handle_common_key(key, record))
         return false;
-    return handle_handness_end(key, record);
+    if (!handle_handness_end(key, record))
+        return false;
+    return handle_repeat_key(key, record);
 }
 
 void keyboard_post_init_user() {
     rgblight_disable_noeeprom();
     rgb_matrix_disable();
+}
+
+void matrix_scan_user() {
+    if (timer_elapsed(common_layer_data.last_repeat_time) >
+        common_layer_data.last_repeat_interval) {
+        tap_code16(common_layer_data.last_repeat_key);
+        common_layer_data.last_repeat_time = timer_read();
+        if (common_layer_data.last_repeat_interval == 1000)
+            common_layer_data.last_repeat_interval =
+                common_layer_data.last_repeat_interval / 27 * 8;
+        else
+            common_layer_data.last_repeat_interval =
+                common_layer_data.last_repeat_interval / 3 * 2;
+    }
 }
