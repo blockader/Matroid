@@ -4,8 +4,8 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 keyboard=$1
-if [ $1 == dz_60 ]; then
-    alias=dz_60
+if [ $1 == new_poker ]; then
+    alias=dz60
 elif [ $1 == matrix_noah ]; then
     alias=matrix/noah
 else

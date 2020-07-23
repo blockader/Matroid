@@ -18,7 +18,8 @@ if sys.platform not in ['darwin']:
     print('%s is not a supported OS.' % sys.platform)
 
 
-sys.stdout = open('/tmp/matroid_computer.log', 'w')
+if '--debug' not in sys.argv:
+    sys.stdout = open('/tmp/matroid_computer.log', 'w')
 stdout_mutex = QtCore.QMutex()
 
 
@@ -57,6 +58,21 @@ keyboards = [
 
 app = QtWidgets.QApplication(sys.argv)
 app.setQuitOnLastWindowClosed(False)
+
+
+class timer(QtCore.QThread):
+    triggered = QtCore.pyqtSignal()
+
+    def __init__(self, interval, job):
+        super(timer, self).__init__()
+        self.interval = interval
+        self.job = job
+
+    def run(self):
+        while True:
+            time.sleep(self.interval)
+            self.job()
+            self.triggered.emit()
 
 
 def send_message(k, m):
@@ -162,14 +178,8 @@ def receive_messages():
                         log('%s: This messages can\'t be recognized.' % k.name)
 
 
-receive_messages_thread = QtCore.QThread()
-receive_messages_timer = QtCore.QTimer()
-receive_messages_timer.moveToThread(receive_messages_thread)
-receive_messages_timer.timeout.connect(receive_messages)
-receive_messages_timer.setInterval(0.005*1000)
-receive_messages_thread.started.connect(
-    receive_messages_timer.start)
-receive_messages_thread.start()
+receive_messages_timer = timer(0.005, receive_messages)
+receive_messages_timer.start()
 
 
 def review():
@@ -208,9 +218,8 @@ def review():
         log('%s: The review of %s is ending.' % (k.name, k.name))
 
 
-review_timer = QtCore.QTimer()
-review_timer.timeout.connect(review)
-review_timer.start(1*1000)
+review_timer = timer(1, review)
+review_timer.start()
 
 
 previous_clipboard = ''
@@ -225,33 +234,42 @@ def minutely_routine():
         previous_clipboard = pyperclip.paste()
 
 
-minutely_routine_timer = QtCore.QTimer()
-minutely_routine_timer.timeout.connect(minutely_routine)
-minutely_routine_timer.start(60*1000)
+minutely_routine_timer = timer(60, minutely_routine)
+minutely_routine_timer.start()
 
 
 def hourly_routine():
     pass
 
 
-hourly_routine_timer = QtCore.QTimer()
-hourly_routine_timer.timeout.connect(hourly_routine)
-hourly_routine_timer.start(60*60*1000)
+break_dialog = QtWidgets.QMessageBox()
+break_dialog.setInformativeText(
+    'You should take a break and relax your body and mind.')
+
+
+def show_break_dialog():
+    if not break_dialog.isVisible():
+        break_dialog.exec_()
+
+
+hourly_routine_timer = timer(60 * 60, hourly_routine)
+hourly_routine_timer.triggered.connect(show_break_dialog)
+hourly_routine_timer.start()
 
 
 def daily_routine():
     with QtCore.QMutexLocker(stdout_mutex):
-        sys.stdout.close()
-        lines = open('/tmp/matroid_computer.log').readlines()
-        lines = lines[-1024:]
-        sys.stdout = open('/tmp/matroid_computer.log', 'w')
-        for line in lines:
-            sys.stdout.write(line)
+        if '--debug' not in sys.argv:
+            sys.stdout.close()
+            lines = open('/tmp/matroid_computer.log').readlines()
+            lines = lines[-1024:]
+            sys.stdout = open('/tmp/matroid_computer.log', 'w')
+            for line in lines:
+                sys.stdout.write(line)
 
 
-daily_routine_timer = QtCore.QTimer()
-daily_routine_timer.timeout.connect(daily_routine)
-daily_routine_timer.start(24*60*60*1000)
+daily_routine_timer = timer(24 * 60 * 60, daily_routine)
+daily_routine_timer.start()
 
 
 tray = QtWidgets.QSystemTrayIcon()
@@ -267,7 +285,6 @@ for k in keyboards:
             k.handness_session_id = int(time.time())
             send_message(k, easydict.EasyDict(
                 session_id=k.handness_session_id, command='handness', arguments=[int(checked)]))
-        return
         time.sleep(0.1)
         with QtCore.QMutexLocker(k.handness_session_id_mutex):
             if k.handness_session_id == -1:
@@ -279,8 +296,20 @@ for k in keyboards:
     keyboard_menu.addAction(keyboard_handness_action)
     k.actions.keyboard_handness_action = keyboard_handness_action
     keyboard_backlight_action = QtWidgets.QAction('Backlight', checkable=True)
-    keyboard_backlight_action.toggled.connect(lambda checked: send_message(k, easydict.EasyDict(
-        session_id=int(time.time()), command='backlight', arguments=[int(checked)])))
+
+    def toggle_backlight(checked):
+        with QtCore.QMutexLocker(k.backlight_session_id_mutex):
+            k.backlight_session_id = int(time.time())
+            send_message(k, easydict.EasyDict(
+                session_id=k.backlight_session_id, command='backlight', arguments=[int(checked)]))
+        time.sleep(0.1)
+        with QtCore.QMutexLocker(k.backlight_session_id_mutex):
+            if k.backlight_session_id == -1:
+                notify('%s: Backlight is now %s.' %
+                       (k.name, 'on' if checked else 'off'))
+            else:
+                notify('%s: Backlight can\'t be changed.' % k.name)
+    keyboard_backlight_action.toggled.connect(toggle_backlight)
     keyboard_menu.addAction(keyboard_backlight_action)
     k.actions.keyboard_backlight_action = keyboard_backlight_action
     tray_menu.addMenu(keyboard_menu)
