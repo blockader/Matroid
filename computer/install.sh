@@ -29,9 +29,12 @@ pushd $path
 rm -rf build dist
 set +e
 pkill "Matroid Computer"
-python setup.py py2app -A
 set -e
-defaults write org.pythonmac.unspecified.MatroidComputer NSAppSleepDisabled -bool YES
+python setup.py py2app -A
+while [ `mdls -name kMDItemCFBundleIdentifier dist/Matroid\ Computer.app|cut -d' ' -f3|tr '"' ' '` == "(null)" ];do
+    sleep 0.1
+done
+defaults write `mdls -name kMDItemCFBundleIdentifier dist/Matroid\ Computer.app|cut -d' ' -f3|tr '"' ' '` NSAppSleepDisabled -bool YES
 cd swim
 swift build -c release
 cd ..

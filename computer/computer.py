@@ -19,11 +19,13 @@ if sys.platform not in ['darwin']:
 
 
 sys.stdout = open('/tmp/matroid_computer.log', 'w')
+stdout_mutex = QtCore.QMutex()
 
 
 def log(*m):
-    print(datetime.datetime.now().strftime("%Y %m %d %H:%M:%S:%f"), *m)
-    sys.stdout.flush()
+    with QtCore.QMutexLocker(stdout_mutex):
+        print(datetime.datetime.now().strftime("%Y %m %d %H:%M:%S:%f"), *m)
+        sys.stdout.flush()
 
 
 def notify(*m):
@@ -164,7 +166,7 @@ receive_messages_thread = QtCore.QThread()
 receive_messages_timer = QtCore.QTimer()
 receive_messages_timer.moveToThread(receive_messages_thread)
 receive_messages_timer.timeout.connect(receive_messages)
-receive_messages_timer.setInterval(5)
+receive_messages_timer.setInterval(0.005*1000)
 receive_messages_thread.started.connect(
     receive_messages_timer.start)
 receive_messages_thread.start()
@@ -208,17 +210,48 @@ def review():
 
 review_timer = QtCore.QTimer()
 review_timer.timeout.connect(review)
-review_timer.start(1000)
+review_timer.start(1*1000)
+
+
+previous_clipboard = ''
 
 
 def minutely_routine():
-    pyperclip.copy('')
-    notify('The clipboard is cleared.')
+    global previous_clipboard
+    if previous_clipboard == pyperclip.paste() and previous_clipboard:
+        pyperclip.copy('')
+        log('The clipboard is cleared.')
+    else:
+        previous_clipboard = pyperclip.paste()
 
 
 minutely_routine_timer = QtCore.QTimer()
 minutely_routine_timer.timeout.connect(minutely_routine)
-minutely_routine_timer.start(60000)
+minutely_routine_timer.start(60*1000)
+
+
+def hourly_routine():
+    pass
+
+
+hourly_routine_timer = QtCore.QTimer()
+hourly_routine_timer.timeout.connect(hourly_routine)
+hourly_routine_timer.start(60*60*1000)
+
+
+def daily_routine():
+    with QtCore.QMutexLocker(stdout_mutex):
+        sys.stdout.close()
+        lines = open('/tmp/matroid_computer.log').readlines()
+        lines = lines[-1024:]
+        sys.stdout = open('/tmp/matroid_computer.log', 'w')
+        for line in lines:
+            sys.stdout.write(line)
+
+
+daily_routine_timer = QtCore.QTimer()
+daily_routine_timer.timeout.connect(daily_routine)
+daily_routine_timer.start(24*60*60*1000)
 
 
 tray = QtWidgets.QSystemTrayIcon()
