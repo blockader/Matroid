@@ -1014,8 +1014,11 @@ void matrix_scan_user() {
         if (common_layer_data.last_repeat_interval == 1000)
             common_layer_data.last_repeat_interval =
                 common_layer_data.last_repeat_interval / 27 * 8;
-        else
+        else {
             common_layer_data.last_repeat_interval =
                 common_layer_data.last_repeat_interval / 3 * 2;
+            if (common_layer_data.last_repeat_interval < 50)
+                common_layer_data.last_repeat_interval = 50;
+        }
     }
 }
