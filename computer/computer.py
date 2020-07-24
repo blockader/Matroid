@@ -153,6 +153,23 @@ def handle_message(k, m):
                         k.backlight_session_id = -1
                 else:
                     log('%s: This backlight isn\'t expected.' % k.name)
+    elif m.command == 'time':
+        if len(m.arguments) != 1 or not m.arguments[0].isdigit():
+            log('%s: This time is corrupted.' % k.name)
+        elif time.perf_counter()*1000 > int(m.arguments[0]):
+            notify('%s: The config is uploading to the keyboard.' % k.name)
+            with QtCore.QMutexLocker(k.actions_mutex):
+                send_message(k, easydict.EasyDict(
+                    session_id=int(time.time()), command='handness', arguments=[1 if k.actions.handness_action.isChecked() else 0]))
+                send_message(k, easydict.EasyDict(
+                    session_id=int(time.time()), command='backlight', arguments=[1 if k.actions.backlight_action.isChecked() else 0]))
+        else:
+            notify('%s: The config is downloading from the keyboard.' % k.name)
+            with QtCore.QMutexLocker(k.actions_mutex):
+                send_message(k, easydict.EasyDict(
+                    session_id=int(time.time()), command='handness', arguments=[-1]))
+                send_message(k, easydict.EasyDict(
+                    session_id=int(time.time()), command='backlight', arguments=[-1]))
     else:
         return False
     return True
@@ -196,13 +213,13 @@ def review():
         if k.interface:
             with QtCore.QMutexLocker(k.heartbeat_session_id_mutex):
                 if k.heartbeat_session_id != -1:
-                    notify('%s: %s is lost.' % (k.name, k.name))
+                    notify('%s: The keyboard is lost.' % k.name)
                     with QtCore.QMutexLocker(k.interface_mutex):
                         k.interface.close()
                         k.interface = None
                     k.menu.setEnabled(False)
                 else:
-                    log('%s: %s is alive.' % (k.name, k.name))
+                    log('%s: The keyboard is alive.' % k.name)
         else:
             for j in range(16):
                 try:
@@ -211,12 +228,9 @@ def review():
                         d.open(k.vendor_id, k.product_id)
                         d.set_nonblocking(1)
                         k.interface = d
-                    notify('%s: %s is detected.' % (k.name, k.name))
-                    with QtCore.QMutexLocker(k.actions_mutex):
-                        send_message(k, easydict.EasyDict(
-                            session_id=int(time.time()), command='handness', arguments=[1 if k.actions.handness_action.isChecked() else 0]))
-                        send_message(k, easydict.EasyDict(
-                            session_id=int(time.time()), command='backlight', arguments=[1 if k.actions.backlight_action.isChecked() else 0]))
+                    notify('%s: The keyboard is detected.' % k.name)
+                    send_message(k, easydict.EasyDict(
+                        session_id=int(time.time()), command='time', arguments=[]))
                     k.menu.setEnabled(True)
                     break
                 except OSError:

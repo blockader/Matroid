@@ -131,6 +131,9 @@ void handle_message(struct message *m) {
             }
             send_message(m);
         }
+    } else if (!strcmp(m->command, "time")) {
+        sprintf(m->arguments, "%d", timer_read());
+        send_message(m);
     } else {
         m->command = "confusion";
         m->arguments[0] = 0;
@@ -993,7 +996,7 @@ bool handle_handness_start(uint16_t key, keyrecord_t *record) {
             if (handness[record->event.key.row][record->event.key.col] *
                     common_layer_data.modifier_handness >
                 0) {
-                bool ignore = false;
+                bool ignore = key == KC_BSPC;
                 if (get_mods() & MOD_MASK_GUI) {
                     switch (key) {
                     case KC_A:
