@@ -105,6 +105,8 @@ void handle_message(struct message *m) {
             if (v == -1)
                 sprintf(m->arguments, "%d",
                         (int)common_layer_data.handness_enabled);
+            else if (common_layer_data.handness_enabled == v)
+                m->arguments = "redundancy";
             else {
                 common_layer_data.handness_enabled = v;
                 m->arguments = "success";
@@ -121,6 +123,8 @@ void handle_message(struct message *m) {
             if (v == -1)
                 sprintf(m->arguments, "%d",
                         (int)common_layer_data.backlight_enabled);
+            else if (common_layer_data.backlight_enabled == v)
+                m->arguments = "redundancy";
             else {
                 common_layer_data.backlight_enabled = v;
                 if (v)
