@@ -63,11 +63,13 @@ struct {
 enum {
     DANCE_PGDN_BOTTOM,
     DANCE_PGUP_TOP,
+    DANCE_LPRN_RPRN,
 };
 
 qk_tap_dance_action_t tap_dance_actions[] = {
     [DANCE_PGDN_BOTTOM] = ACTION_TAP_DANCE_DOUBLE(KC_PGDN, LGUI(KC_DOWN)),
     [DANCE_PGUP_TOP] = ACTION_TAP_DANCE_DOUBLE(KC_PGUP, LGUI(KC_UP)),
+    [DANCE_LPRN_RPRN] = ACTION_TAP_DANCE_DOUBLE(KC_LPRN, KC_RPRN),
 };
 
 #define KEY_DANCE(a) TD(a)
