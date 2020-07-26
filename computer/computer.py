@@ -47,7 +47,7 @@ keyboards = [
         vendor_id=0x4D58,
         product_id=0x0065,
         interface=None,
-        interface_mutex=QtCore.QMutex(),
+        interface_mutex=QtCore.QMutex(QtCore.QMutex.Recursive),
         heartbeat_session_id=-1,
         heartbeat_session_id_mutex=QtCore.QMutex(),
         handness_session_id=-1,
@@ -75,9 +75,10 @@ class timer(QtCore.QThread):
 
     def run(self):
         while True:
-            time.sleep(self.interval)
+            now = time.perf_counter()
             self.job()
             self.triggered.emit()
+            time.sleep(max(self.interval - (time.perf_counter() - now), 0))
 
 
 def send_message(k, m):
@@ -183,6 +184,11 @@ def handle_message(k, m):
                     session_id=int(time.time()), command='handness', arguments=[-1]))
                 send_message(k, easydict.EasyDict(
                     session_id=int(time.time()), command='backlight', arguments=[-1]))
+    elif m.command == 'notify':
+        if len(m.arguments) != 1 or not m.arguments[0].isdigit():
+            log('%s: This notify is corrupted.' % k.name)
+        else:
+            notify('%s: %s' % (k.name, m.arguments[0]))
     else:
         return False
     return True
@@ -260,10 +266,28 @@ review_timer = timer(1, review)
 review_timer.start()
 
 
+def five_secondly_routine():
+    application = None
+    for k in keyboards:
+        with QtCore.QMutexLocker(k.interface_mutex):
+            if k.interface:
+                if not application:
+                    application = subprocess.run(['osascript', '-e', 'tell application "System Events"', '-e',
+                                                  'set t to name of first application process whose frontmost is true', '-e', 'end tell'], stdout=subprocess.PIPE).stdout.strip().decode()
+                    log('The current application is %s.' % application)
+                    application = {'Terminal': 1}.get(application, 0)
+                send_message(k, easydict.EasyDict(
+                    session_id=int(time.time()), command='application', arguments=[application]))
+
+
+five_secondly_routine_timer = timer(5, five_secondly_routine)
+five_secondly_routine_timer.start()
+
+
 previous_clipboard = ''
 
 
-def minutely_routine():
+def five_minutely_routine():
     global previous_clipboard
     if previous_clipboard == pyperclip.paste() and previous_clipboard:
         pyperclip.copy('')
@@ -272,8 +296,8 @@ def minutely_routine():
         previous_clipboard = pyperclip.paste()
 
 
-minutely_routine_timer = timer(60, minutely_routine)
-minutely_routine_timer.start()
+five_minutely_routine_timer = timer(5 * 60, five_minutely_routine)
+five_minutely_routine_timer.start()
 
 
 def hourly_routine():
@@ -282,7 +306,7 @@ def hourly_routine():
 
 break_dialog = QtWidgets.QMessageBox()
 break_dialog.setInformativeText(
-    'You should take a break and relax your body and mind.')
+    'You should take a break to relax your body, clear your mind and schedule things. Remeber laziness is efficiency.')
 break_dialog.setWindowFlags(
     QtCore.Qt.WindowStaysOnTopHint)
 
@@ -321,6 +345,7 @@ for k in keyboards:
     keyboard_menu.setEnabled(False)
     k.menu = keyboard_menu
     keyboard_handness_action = QtWidgets.QAction('Handness', checkable=True)
+    keyboard_handness_action.setChecked(True)
 
     def toggle_handness(checked):
         with QtCore.QMutexLocker(k.handness_session_id_mutex):

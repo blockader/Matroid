@@ -9,6 +9,8 @@ enum {
     LAYER_NORM_EXTENSION,
     LAYER_RACE_BASE,
     LAYER_RACE_EXTENSION,
+    LAYER_GAME_BASE,
+    LAYER_GAME_EXTENSION,
     LAYER_LEGACY_BASE,
     LAYER_LEGACY_EXTENSION,
     LAYER_CONTROL,
@@ -20,6 +22,7 @@ enum {
 bool temporary[NUMBER_OF_LAYERS] = {
     [LAYER_NORM_BASE] = false,   [LAYER_NORM_EXTENSION] = true,
     [LAYER_RACE_BASE] = false,   [LAYER_RACE_EXTENSION] = true,
+    [LAYER_GAME_BASE] = false,   [LAYER_GAME_EXTENSION] = true,
     [LAYER_LEGACY_BASE] = false, [LAYER_LEGACY_EXTENSION] = true,
     [LAYER_CONTROL] = false,     [LAYER_WINDOW] = true,
     [LAYER_DESKTOP] = false,
@@ -33,10 +36,16 @@ enum OS {
     WINDOWS,
 };
 
+enum Application {
+    DEFAULT,
+    TERMINAL,
+    NUMBER_OF_APPLICATIONS,
+};
+
 struct {
     bool ended, handness_enabled, backlight_enabled, slave;
     int8_t last_nonspace_handness, modifier_handness;
-    uint8_t os;
+    uint8_t os, application;
     uint16_t last_repeat_key;
     int last_nonspace_time, last_repeat_time, last_repeat_interval;
 } common_layer_data;
@@ -75,6 +84,7 @@ enum custom_keycodes {
     KEY_CUT_WORD,
     KEY_CUT_LINE,
     KEY_CUT_SELECTION,
+    KEY_MOVE_LINE_STRAT,
 };
 
 struct message {
@@ -138,6 +148,18 @@ void handle_message(struct message *m) {
     } else if (!strcmp(m->command, "time")) {
         sprintf(m->arguments, "%d", timer_read());
         send_message(m);
+    } else if (!strcmp(m->command, "application")) {
+        int v;
+        if (sscanf(m->arguments, "%d", &v) != 1 || v < 0 ||
+            v >= NUMBER_OF_APPLICATIONS) {
+            m->command = "confusion";
+            m->arguments[0] = 0;
+            send_message(m);
+        } else {
+            common_layer_data.application = v;
+            m->arguments = "success";
+            send_message(m);
+        }
     } else {
         m->command = "confusion";
         m->arguments[0] = 0;
@@ -163,6 +185,27 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
 }
 
 extern const int8_t handness[MATRIX_ROWS][MATRIX_COLS];
+
+uint16_t translate_key(uint16_t key) {
+    switch (key) {
+    case KEY_MOVE_LINE_STRAT:
+        switch (common_layer_data.os) {
+        case MACOS:
+            switch (common_layer_data.application) {
+            case TERMINAL:
+                return LCTL(KC_A);
+            default:
+                return LGUI(KC_LEFT);
+            }
+        case LINUX:
+            return key;
+        case WINDOWS:
+            return key;
+        }
+    default:
+        return key;
+    }
+}
 
 bool handle_layer_key(uint16_t key, keyrecord_t *record) {
     switch (layers[layers[0] + 1]) {
@@ -360,15 +403,15 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
                 layer_control_data.operator= - 1;
             }
             return false;
-        case LGUI(KC_LEFT):
+        case KEY_MOVE_LINE_STRAT:
             if (record->event.pressed) {
                 if (layer_control_data.operator== - 1)
-                    tap_code16(LGUI(KC_LEFT));
+                    tap_code16(translate_key(KEY_MOVE_LINE_STRAT));
                 else if (layer_control_data.operator== KC_BSPC) {
-                    tap_code16(LSFT(LGUI(KC_LEFT)));
+                    tap_code16(LSFT(translate_key(KEY_MOVE_LINE_STRAT)));
                     tap_code16(LGUI(KC_X));
                 } else if (layer_control_data.operator== LGUI(KC_C)) {
-                    tap_code16(LSFT(LGUI(KC_LEFT)));
+                    tap_code16(LSFT(translate_key(KEY_MOVE_LINE_STRAT)));
                     tap_code16(LGUI(KC_C));
                     tap_code(KC_RIGHT);
                 }
@@ -966,6 +1009,10 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
                 tap_code16(LGUI(KC_X));
         }
         return false;
+    case KEY_MOVE_LINE_STRAT:
+        if (record->event.pressed)
+            tap_code16(translate_key(KEY_MOVE_LINE_STRAT));
+        return false;
     }
     return true;
 }
@@ -995,7 +1042,7 @@ bool handle_handness_start(uint16_t key, keyrecord_t *record) {
                 handness[record->event.key.row][record->event.key.col];
         else
             common_layer_data.modifier_handness = 0;
-    } else {
+    } else if (!modifier(key)) {
         if (record->event.pressed) {
             if (handness[record->event.key.row][record->event.key.col] *
                     common_layer_data.modifier_handness >
@@ -1011,12 +1058,8 @@ bool handle_handness_start(uint16_t key, keyrecord_t *record) {
                         ignore = true;
                     }
                 }
-                if (get_mods() & MOD_MASK_CTRL) {
-                    switch (key) {
-                    case KC_C:
-                        ignore = true;
-                    }
-                }
+                if (get_mods() & MOD_MASK_CTRL)
+                    ignore = true;
                 if (!ignore)
                     return false;
             }
@@ -1074,14 +1117,14 @@ bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
         case LGUI(KC_V):
             common_layer_data.last_repeat_key = key;
             common_layer_data.last_repeat_time = timer_read();
-            common_layer_data.last_repeat_interval = 1000;
+            common_layer_data.last_repeat_interval = 500;
             break;
         case KC_Z:
         case KC_V:
             if (get_mods() & MOD_MASK_GUI) {
                 common_layer_data.last_repeat_key = key;
                 common_layer_data.last_repeat_time = timer_read();
-                common_layer_data.last_repeat_interval = 1000;
+                common_layer_data.last_repeat_interval = 500;
             } else
                 common_layer_data.last_repeat_key = 0;
             break;
@@ -1114,6 +1157,7 @@ bool process_record_user(uint16_t key, keyrecord_t *record) {
 void keyboard_post_init_user() {
     rgblight_disable_noeeprom();
     rgb_matrix_disable();
+    common_layer_data.handness_enabled = true;
 }
 
 void matrix_scan_user() {
@@ -1121,7 +1165,7 @@ void matrix_scan_user() {
         common_layer_data.last_repeat_interval) {
         tap_code16(common_layer_data.last_repeat_key);
         common_layer_data.last_repeat_time = timer_read();
-        if (common_layer_data.last_repeat_interval == 1000)
+        if (common_layer_data.last_repeat_interval == 500)
             common_layer_data.last_repeat_interval =
                 common_layer_data.last_repeat_interval / 27 * 8;
         else {
