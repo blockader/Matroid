@@ -73,7 +73,7 @@ for k in keyboards:
     keyboard_menu = QtWidgets.QMenu(k.name)
     keyboard_menu.setEnabled(False)
     k.menu = keyboard_menu
-    keyboard_handness_action = QtWidgets.QAction('Handness', checkable=True)
+    keyboard_handness_action = QtWidgets.QAction('Handedness', checkable=True)
     keyboard_handness_action.setChecked(True)
 
     def toggle_handness(checked):

@@ -74,6 +74,9 @@ qk_tap_dance_action_t tap_dance_actions[] = {
 
 #define KEY_DANCE(a) TD(a)
 
+#define KEY_LSPC KC_SPC
+#define KEY_RSPC KC_SPC
+
 enum custom_keycodes {
     KEY_BACK_LAYER = SAFE_RANGE + NUMBER_OF_LAYERS,
     KEY_INSERT_LINE_START,
@@ -94,14 +97,16 @@ struct message {
     char *command, *arguments;
 };
 
+char send_message_buffer[RAW_EPSIZE + 1];
+
 void send_message(const struct message *m) {
-    char b[RAW_EPSIZE + 1];
-    memset(b, 0, RAW_EPSIZE + 1);
+    memset(send_message_buffer, 0, RAW_EPSIZE + 1);
     if (m->arguments[0])
-        sprintf(b, "%d %s %s", m->session_id, m->command, m->arguments);
+        sprintf(send_message_buffer, "%d %s %s", m->session_id, m->command,
+                m->arguments);
     else
-        sprintf(b, "%d %s", m->session_id, m->command);
-    raw_hid_send((uint8_t *)b, RAW_EPSIZE);
+        sprintf(send_message_buffer, "%d %s", m->session_id, m->command);
+    raw_hid_send((uint8_t *)send_message_buffer, RAW_EPSIZE);
 }
 
 void handle_message(struct message *m) {
@@ -139,10 +144,12 @@ void handle_message(struct message *m) {
                 m->arguments = "redundancy";
             else {
                 common_layer_data.backlight_enabled = v;
+#if VENDOR_ID != 0x445A || PRODUCT_ID != 0x2260
                 if (v)
                     rgb_matrix_enable();
                 else
                     rgb_matrix_disable();
+#endif
                 m->arguments = "success";
             }
             send_message(m);
@@ -159,6 +166,17 @@ void handle_message(struct message *m) {
             send_message(m);
         } else {
             common_layer_data.application = v;
+            m->arguments = "success";
+            send_message(m);
+        }
+    } else if (!strcmp(m->command, "slave")) {
+        int v;
+        if (sscanf(m->arguments, "%d", &v) != 1 || v < 0 || v > 1) {
+            m->command = "confusion";
+            m->arguments[0] = 0;
+            send_message(m);
+        } else {
+            common_layer_data.slave = v;
             m->arguments = "success";
             send_message(m);
         }
@@ -212,87 +230,18 @@ uint16_t translate_key(uint16_t key) {
 bool handle_layer_key(uint16_t key, keyrecord_t *record) {
     switch (layers[layers[0] + 1]) {
     case LAYER_CONTROL:
-        switch (key) {
-        case KC_0:
+        if (key >= KC_1 && key <= KC_0) {
             if (record->event.pressed) {
                 layer_control_data.multiplier =
                     layer_control_data.multiplier * 10;
+                if (key != KC_0)
+                    layer_control_data.multiplier += key - KC_1 + 1;
                 if (layer_control_data.multiplier < 0)
                     layer_control_data.multiplier = 0;
             }
             return false;
-        case KC_1:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 1;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
-        case KC_2:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 2;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
-        case KC_3:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 3;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
-        case KC_4:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 4;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
-        case KC_5:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 5;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
-        case KC_6:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 6;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
-        case KC_7:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 7;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
-        case KC_8:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 8;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
-        case KC_9:
-            if (record->event.pressed) {
-                layer_control_data.multiplier =
-                    layer_control_data.multiplier * 10 + 9;
-                if (layer_control_data.multiplier < 0)
-                    layer_control_data.multiplier = 0;
-            }
-            return false;
+        }
+        switch (key) {
         case KEY_INSERT_LINE_START:
             if (record->event.pressed)
                 common_layer_data.ended = true;
@@ -1145,6 +1094,13 @@ bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
 }
 
 bool process_record_user(uint16_t key, keyrecord_t *record) {
+    if (common_layer_data.slave) {
+        memset(send_message_buffer, 0, RAW_EPSIZE + 1);
+        sprintf(send_message_buffer, "%d slave %d %d", timer_read(),
+                record->event.key.row, record->event.key.col);
+        raw_hid_send((uint8_t *)send_message_buffer, RAW_EPSIZE);
+        return false;
+    }
     if (!handle_handness_start(key, record))
         return false;
     if (!handle_layer_key(key, record))
@@ -1155,12 +1111,16 @@ bool process_record_user(uint16_t key, keyrecord_t *record) {
         return false;
     if (!handle_handness_end(key, record))
         return false;
-    return handle_repeat_key(key, record);
+    if (!handle_repeat_key(key, record))
+        return false;
+    return true;
 }
 
 void keyboard_post_init_user() {
     rgblight_disable_noeeprom();
+#if VENDOR_ID != 0x445A || PRODUCT_ID != 0x2260
     rgb_matrix_disable();
+#endif
     common_layer_data.handness_enabled = true;
 }
 
