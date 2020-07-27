@@ -99,19 +99,14 @@ struct message {
 
 char send_message_buffer[RAW_EPSIZE + 1];
 
-#if VENDOR_ID != 0x445A || PRODUCT_ID != 0x2260
-#define INT32_SPECIFIER "%d"
-#else
-#define INT32_SPECIFIER "%ld"
-#endif
-
 void send_message(const struct message *m) {
     memset(send_message_buffer, 0, RAW_EPSIZE + 1);
     if (m->arguments[0])
-        sprintf(send_message_buffer, INT32_SPECIFIER" %s %s", m->session_id, m->command,
-                m->arguments);
+        sprintf(send_message_buffer, INT32_SPECIFIER " %s %s", m->session_id,
+                m->command, m->arguments);
     else
-        sprintf(send_message_buffer, INT32_SPECIFIER" %s", m->session_id, m->command);
+        sprintf(send_message_buffer, INT32_SPECIFIER " %s", m->session_id,
+                m->command);
     raw_hid_send((uint8_t *)send_message_buffer, RAW_EPSIZE);
 }
 
@@ -150,7 +145,7 @@ void handle_message(struct message *m) {
                 m->arguments = "redundancy";
             else {
                 common_layer_data.backlight_enabled = v;
-#if VENDOR_ID != 0x445A || PRODUCT_ID != 0x2260
+#ifdef BACKLIGHT_ENABLED
                 if (v)
                     rgb_matrix_enable();
                 else
@@ -198,9 +193,10 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
     char c[RAW_EPSIZE + 1], a[RAW_EPSIZE + 1];
     m.command = c;
     m.arguments = a;
-    if (sscanf((char *)data, INT32_SPECIFIER"%s%s", &m.session_id, c, a) == 3)
+    if (sscanf((char *)data, INT32_SPECIFIER "%s%s", &m.session_id, c, a) == 3)
         handle_message(&m);
-    else if (sscanf((char *)data, INT32_SPECIFIER"%s", &m.session_id, c) == 2) {
+    else if (sscanf((char *)data, INT32_SPECIFIER "%s", &m.session_id, c) ==
+             2) {
         a[0] = 0;
         handle_message(&m);
     } else {
@@ -1124,7 +1120,7 @@ bool process_record_user(uint16_t key, keyrecord_t *record) {
 
 void keyboard_post_init_user() {
     rgblight_disable_noeeprom();
-#if VENDOR_ID != 0x445A || PRODUCT_ID != 0x2260
+#ifdef BACKLIGHT_ENABLED
     rgb_matrix_disable();
 #endif
     common_layer_data.handness_enabled = true;
