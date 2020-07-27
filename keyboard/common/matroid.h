@@ -93,19 +93,25 @@ enum custom_keycodes {
 };
 
 struct message {
-    int session_id;
+    int32_t session_id;
     char *command, *arguments;
 };
 
 char send_message_buffer[RAW_EPSIZE + 1];
 
+#if VENDOR_ID != 0x445A || PRODUCT_ID != 0x2260
+#define INT32_SPECIFIER "%d"
+#else
+#define INT32_SPECIFIER "%ld"
+#endif
+
 void send_message(const struct message *m) {
     memset(send_message_buffer, 0, RAW_EPSIZE + 1);
     if (m->arguments[0])
-        sprintf(send_message_buffer, "%d %s %s", m->session_id, m->command,
+        sprintf(send_message_buffer, INT32_SPECIFIER" %s %s", m->session_id, m->command,
                 m->arguments);
     else
-        sprintf(send_message_buffer, "%d %s", m->session_id, m->command);
+        sprintf(send_message_buffer, INT32_SPECIFIER" %s", m->session_id, m->command);
     raw_hid_send((uint8_t *)send_message_buffer, RAW_EPSIZE);
 }
 
@@ -192,9 +198,9 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
     char c[RAW_EPSIZE + 1], a[RAW_EPSIZE + 1];
     m.command = c;
     m.arguments = a;
-    if (sscanf((char *)data, "%d%s%s", &m.session_id, c, a) == 3)
+    if (sscanf((char *)data, INT32_SPECIFIER"%s%s", &m.session_id, c, a) == 3)
         handle_message(&m);
-    else if (sscanf((char *)data, "%d%s", &m.session_id, c) == 2) {
+    else if (sscanf((char *)data, INT32_SPECIFIER"%s", &m.session_id, c) == 2) {
         a[0] = 0;
         handle_message(&m);
     } else {

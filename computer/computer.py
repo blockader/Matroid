@@ -57,6 +57,22 @@ keyboards = [
         menu=None,
         actions=easydict.EasyDict(),
         actions_mutex=QtCore.QMutex()
+    ),
+    easydict.EasyDict(
+        name='New Poker',
+        vendor_id=0x445A,
+        product_id=0x2260,
+        interface=None,
+        interface_mutex=QtCore.QMutex(QtCore.QMutex.Recursive),
+        heartbeat_session_id=-1,
+        heartbeat_session_id_mutex=QtCore.QMutex(),
+        handness_session_id=-1,
+        handness_session_id_mutex=QtCore.QMutex(),
+        backlight_session_id=-1,
+        backlight_session_id_mutex=QtCore.QMutex(),
+        menu=None,
+        actions=easydict.EasyDict(),
+        actions_mutex=QtCore.QMutex()
     )
 ]
 
@@ -166,8 +182,8 @@ def handle_message(k, m):
         elif m.arguments[0].isdigit():
             with QtCore.QMutexLocker(k.actions_mutex):
                 k.actions.handness_action.setChecked(int(m.arguments[0]))
-                notify('%s: Handness is now %s.' %
-                       (k.name, 'on' if k.actions.handness_action.isChecked() else 'off'))
+                log('%s: Handness is now %s.' %
+                    (k.name, 'on' if k.actions.handness_action.isChecked() else 'off'))
         else:
             with QtCore.QMutexLocker(k.handness_session_id_mutex):
                 if k.handness_session_id == m.session_id:
@@ -177,8 +193,8 @@ def handle_message(k, m):
                     else:
                         k.handness_session_id = -1
                         with QtCore.QMutexLocker(k.actions_mutex):
-                            notify('%s: Handness is now %s.' %
-                                   (k.name, 'on' if k.actions.handness_action.isChecked() else 'off'))
+                            log('%s: Handness is now %s.' %
+                                (k.name, 'on' if k.actions.handness_action.isChecked() else 'off'))
                 else:
                     log('%s: This handness isn\'t expected.' % k.name)
     elif m.command == 'backlight':
@@ -187,8 +203,8 @@ def handle_message(k, m):
         elif m.arguments[0].isdigit():
             with QtCore.QMutexLocker(k.actions_mutex):
                 k.actions.backlight_action.setChecked(int(m.arguments[0]))
-                notify('%s: Backlight is now %s.' %
-                       (k.name, 'on' if k.actions.backlight_action.isChecked() else 'off'))
+                log('%s: Backlight is now %s.' %
+                    (k.name, 'on' if k.actions.backlight_action.isChecked() else 'off'))
         else:
             with QtCore.QMutexLocker(k.backlight_session_id_mutex):
                 if k.backlight_session_id == m.session_id:
@@ -198,8 +214,8 @@ def handle_message(k, m):
                     else:
                         k.backlight_session_id = -1
                         with QtCore.QMutexLocker(k.actions_mutex):
-                            notify('%s: Backlight is now %s.' %
-                                   (k.name, 'on' if k.actions.backlight_action.isChecked() else 'off'))
+                            log('%s: Backlight is now %s.' %
+                                (k.name, 'on' if k.actions.backlight_action.isChecked() else 'off'))
 
                 else:
                     log('%s: This backlight isn\'t expected.' % k.name)
@@ -207,14 +223,14 @@ def handle_message(k, m):
         if len(m.arguments) != 1 or not m.arguments[0].isdigit():
             log('%s: This time is corrupted.' % k.name)
         elif time.perf_counter()*1000 > int(m.arguments[0]):
-            notify('%s: The config is being uploading to the keyboard.' % k.name)
+            log('%s: The config is being uploading to the keyboard.' % k.name)
             with QtCore.QMutexLocker(k.actions_mutex):
                 send_message(k, easydict.EasyDict(
                     session_id=int(time.time()), command='handness', arguments=[1 if k.actions.handness_action.isChecked() else 0]))
                 send_message(k, easydict.EasyDict(
                     session_id=int(time.time()), command='backlight', arguments=[1 if k.actions.backlight_action.isChecked() else 0]))
         else:
-            notify('%s: The config is being downloading from the keyboard.' % k.name)
+            log('%s: The config is being downloading from the keyboard.' % k.name)
             with QtCore.QMutexLocker(k.actions_mutex):
                 send_message(k, easydict.EasyDict(
                     session_id=int(time.time()), command='handness', arguments=[-1]))

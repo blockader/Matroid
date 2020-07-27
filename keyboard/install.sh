@@ -58,6 +58,7 @@ elif [ $keyboard == new_poker ]; then
     echo Please reset your keyboard by pressing the key that produces the RESET key code.
     if [ $os == Darwin ]; then
         echo Please use QMK Tool Box to upload the firmware.
+        python3 -c "input()"
     else
         echo $os is not a supported OS.
         exit 1
