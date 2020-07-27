@@ -1044,6 +1044,7 @@ bool handle_handness_start(uint16_t key, keyrecord_t *record) {
                 handness[record->event.key.row][record->event.key.col];
         else
             common_layer_data.modifier_handness = 0;
+        common_layer_data.modifier_handness = 0;
     } else if (!modifier(key)) {
         if (record->event.pressed) {
             if (handness[record->event.key.row][record->event.key.col] *
@@ -1100,6 +1101,7 @@ bool handle_handness_end(uint16_t key, keyrecord_t *record) {
         } else {
             common_layer_data.modifier_handness = 0;
         }
+        common_layer_data.modifier_handness = 0;
         return true;
     }
     return true;

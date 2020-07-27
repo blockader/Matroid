@@ -65,6 +65,42 @@ app = QtWidgets.QApplication(sys.argv)
 app.setQuitOnLastWindowClosed(False)
 
 
+tray = QtWidgets.QSystemTrayIcon()
+tray.setIcon(QtGui.QIcon(path + '/icon.png'))
+tray.setVisible(True)
+tray_menu = QtWidgets.QMenu()
+for k in keyboards:
+    keyboard_menu = QtWidgets.QMenu(k.name)
+    keyboard_menu.setEnabled(False)
+    k.menu = keyboard_menu
+    keyboard_handness_action = QtWidgets.QAction('Handness', checkable=True)
+    keyboard_handness_action.setChecked(True)
+
+    def toggle_handness(checked):
+        with QtCore.QMutexLocker(k.handness_session_id_mutex):
+            k.handness_session_id = int(time.time())
+            send_message(k, easydict.EasyDict(
+                session_id=k.handness_session_id, command='handness', arguments=[int(checked)]))
+    keyboard_handness_action.toggled.connect(toggle_handness)
+    keyboard_menu.addAction(keyboard_handness_action)
+    k.actions.handness_action = keyboard_handness_action
+    keyboard_backlight_action = QtWidgets.QAction('Backlight', checkable=True)
+
+    def toggle_backlight(checked):
+        with QtCore.QMutexLocker(k.backlight_session_id_mutex):
+            k.backlight_session_id = int(time.time())
+            send_message(k, easydict.EasyDict(
+                session_id=k.backlight_session_id, command='backlight', arguments=[int(checked)]))
+    keyboard_backlight_action.toggled.connect(toggle_backlight)
+    keyboard_menu.addAction(keyboard_backlight_action)
+    k.actions.backlight_action = keyboard_backlight_action
+    tray_menu.addMenu(keyboard_menu)
+tray_quit_action = QtWidgets.QAction('Quit')
+tray_quit_action.triggered.connect(app.quit)
+tray_menu.addAction(tray_quit_action)
+tray.setContextMenu(tray_menu)
+
+
 class timer(QtCore.QThread):
     triggered = QtCore.pyqtSignal()
 
@@ -223,47 +259,6 @@ def receive_messages():
 
 
 receive_messages_timer = timer(0.005, receive_messages)
-receive_messages_timer.start()
-
-
-def review():
-    for k in keyboards:
-        log('%s: The review of %s is starting.' % (k.name, k.name))
-        if k.interface:
-            with QtCore.QMutexLocker(k.heartbeat_session_id_mutex):
-                if k.heartbeat_session_id != -1:
-                    notify('%s: The keyboard is lost.' % k.name)
-                    with QtCore.QMutexLocker(k.interface_mutex):
-                        k.interface.close()
-                        k.interface = None
-                    k.menu.setEnabled(False)
-                else:
-                    log('%s: The keyboard is alive.' % k.name)
-        else:
-            for j in range(16):
-                try:
-                    with QtCore.QMutexLocker(k.interface_mutex):
-                        d = hid.device()
-                        d.open(k.vendor_id, k.product_id)
-                        d.set_nonblocking(1)
-                        k.interface = d
-                    notify('%s: The keyboard is detected.' % k.name)
-                    send_message(k, easydict.EasyDict(
-                        session_id=int(time.time()), command='time', arguments=[]))
-                    k.menu.setEnabled(True)
-                    break
-                except OSError:
-                    pass
-        if k.interface:
-            with QtCore.QMutexLocker(k.heartbeat_session_id_mutex):
-                k.heartbeat_session_id = int(time.time())
-                send_message(k, easydict.EasyDict(
-                    session_id=k.heartbeat_session_id, command='heartbeat', arguments=[]))
-        log('%s: The review of %s is ending.' % (k.name, k.name))
-
-
-review_timer = timer(1, review)
-review_timer.start()
 
 
 def five_secondly_routine():
@@ -272,8 +267,11 @@ def five_secondly_routine():
         with QtCore.QMutexLocker(k.interface_mutex):
             if k.interface:
                 if not application:
-                    application = subprocess.run(['osascript', '-e', 'tell application "System Events"', '-e',
-                                                  'set t to name of first application process whose frontmost is true', '-e', 'end tell'], stdout=subprocess.PIPE).stdout.strip().decode()
+                    if sys.platform == 'darwin':
+                        application = subprocess.run(['osascript', '-e', 'tell application "System Events"', '-e',
+                                                      'set t to name of first application process whose frontmost is true', '-e', 'end tell'], stdout=subprocess.PIPE).stdout.strip().decode()
+                    else:
+                        log('%s is not a supported OS.' % sys.platform)
                     log('The current application is %s.' % application)
                     application = {'Terminal': 1}.get(application, 0)
                 send_message(k, easydict.EasyDict(
@@ -281,7 +279,6 @@ def five_secondly_routine():
 
 
 five_secondly_routine_timer = timer(5, five_secondly_routine)
-five_secondly_routine_timer.start()
 
 
 previous_clipboard = ''
@@ -297,7 +294,6 @@ def five_minutely_routine():
 
 
 five_minutely_routine_timer = timer(5 * 60, five_minutely_routine)
-five_minutely_routine_timer.start()
 
 
 def hourly_routine():
@@ -318,7 +314,6 @@ def show_break_dialog():
 
 hourly_routine_timer = timer(60 * 60, hourly_routine)
 hourly_routine_timer.triggered.connect(show_break_dialog)
-hourly_routine_timer.start()
 
 
 def daily_routine():
@@ -333,43 +328,66 @@ def daily_routine():
 
 
 daily_routine_timer = timer(24 * 60 * 60, daily_routine)
+
+
+class ReviewTimer(QtCore.QThread):
+    connected = QtCore.pyqtSignal(int)
+    lost = QtCore.pyqtSignal(int)
+
+    def __init__(self, interval):
+        super(ReviewTimer, self).__init__()
+        self.interval = interval
+
+    def run(self):
+        while True:
+            now = time.perf_counter()
+            for i, k in enumerate(keyboards):
+                log('%s: The review of %s is starting.' % (k.name, k.name))
+                if k.interface:
+                    with QtCore.QMutexLocker(k.heartbeat_session_id_mutex):
+                        if k.heartbeat_session_id != -1:
+                            notify('%s: The keyboard is lost.' % k.name)
+                            with QtCore.QMutexLocker(k.interface_mutex):
+                                k.interface.close()
+                                k.interface = None
+                            self.lost.emit(i)
+                        else:
+                            log('%s: The keyboard is alive.' % k.name)
+                else:
+                    for j in range(16):
+                        try:
+                            with QtCore.QMutexLocker(k.interface_mutex):
+                                d = hid.device()
+                                d.open(k.vendor_id, k.product_id)
+                                d.set_nonblocking(1)
+                                k.interface = d
+                            notify('%s: The keyboard is connected.' % k.name)
+                            send_message(k, easydict.EasyDict(
+                                session_id=int(time.time()), command='time', arguments=[]))
+                            self.connected.emit(i)
+                            break
+                        except OSError:
+                            pass
+                if k.interface:
+                    with QtCore.QMutexLocker(k.heartbeat_session_id_mutex):
+                        k.heartbeat_session_id = int(time.time())
+                        send_message(k, easydict.EasyDict(
+                            session_id=k.heartbeat_session_id, command='heartbeat', arguments=[]))
+                log('%s: The review of %s is ending.' % (k.name, k.name))
+            time.sleep(max(self.interval - (time.perf_counter() - now), 0))
+
+
+review_timer = ReviewTimer(1)
+review_timer.lost.connect(lambda i: keyboards[i].menu.setEnabled(False))
+review_timer.connected.connect(lambda i: keyboards[i].menu.setEnabled(True))
+
+
+receive_messages_timer.start()
+review_timer.start()
 daily_routine_timer.start()
-
-
-tray = QtWidgets.QSystemTrayIcon()
-tray.setIcon(QtGui.QIcon(path + '/icon.png'))
-tray.setVisible(True)
-tray_menu = QtWidgets.QMenu()
-for k in keyboards:
-    keyboard_menu = QtWidgets.QMenu(k.name)
-    keyboard_menu.setEnabled(False)
-    k.menu = keyboard_menu
-    keyboard_handness_action = QtWidgets.QAction('Handness', checkable=True)
-    keyboard_handness_action.setChecked(True)
-
-    def toggle_handness(checked):
-        with QtCore.QMutexLocker(k.handness_session_id_mutex):
-            k.handness_session_id = int(time.time())
-            send_message(k, easydict.EasyDict(
-                session_id=k.handness_session_id, command='handness', arguments=[int(checked)]))
-    keyboard_handness_action.toggled.connect(toggle_handness)
-    keyboard_menu.addAction(keyboard_handness_action)
-    k.actions.handness_action = keyboard_handness_action
-    keyboard_backlight_action = QtWidgets.QAction('Backlight', checkable=True)
-
-    def toggle_backlight(checked):
-        with QtCore.QMutexLocker(k.backlight_session_id_mutex):
-            k.backlight_session_id = int(time.time())
-            send_message(k, easydict.EasyDict(
-                session_id=k.backlight_session_id, command='backlight', arguments=[int(checked)]))
-    keyboard_backlight_action.toggled.connect(toggle_backlight)
-    keyboard_menu.addAction(keyboard_backlight_action)
-    k.actions.backlight_action = keyboard_backlight_action
-    tray_menu.addMenu(keyboard_menu)
-tray_quit_action = QtWidgets.QAction('Quit')
-tray_quit_action.triggered.connect(app.quit)
-tray_menu.addAction(tray_quit_action)
-tray.setContextMenu(tray_menu)
+hourly_routine_timer.start()
+five_minutely_routine_timer.start()
+five_secondly_routine_timer.start()
 
 
 app.exec_()
