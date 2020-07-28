@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 import hid
 import easydict
 import sys
@@ -10,10 +9,12 @@ import os
 import datetime
 import pyperclip
 from PyQt5 import QtCore, QtGui, QtWidgets
+import key_translator
+import keyboards
 
 
 if '--debug' not in sys.argv:
-    sys.stdout = open('/tmp/matroid_computer.log', 'w')
+    sys.stdout = open('/tmp/matroid_computer.log', 'a')
 stdout_mutex = QtCore.QMutex()
 
 
@@ -41,42 +42,6 @@ def notify(*m):
 path = os.path.dirname(sys.argv[0])
 
 
-keyboards = [
-    easydict.EasyDict(
-        name='Matrix Noah',
-        vendor_id=0x4D58,
-        product_id=0x0065,
-        interface=None,
-        interface_mutex=QtCore.QMutex(QtCore.QMutex.Recursive),
-        heartbeat_session_id=-1,
-        heartbeat_session_id_mutex=QtCore.QMutex(),
-        handness_session_id=-1,
-        handness_session_id_mutex=QtCore.QMutex(),
-        backlight_session_id=-1,
-        backlight_session_id_mutex=QtCore.QMutex(),
-        menu=None,
-        actions=easydict.EasyDict(),
-        actions_mutex=QtCore.QMutex()
-    ),
-    easydict.EasyDict(
-        name='New Poker',
-        vendor_id=0x445A,
-        product_id=0x2260,
-        interface=None,
-        interface_mutex=QtCore.QMutex(QtCore.QMutex.Recursive),
-        heartbeat_session_id=-1,
-        heartbeat_session_id_mutex=QtCore.QMutex(),
-        handness_session_id=-1,
-        handness_session_id_mutex=QtCore.QMutex(),
-        backlight_session_id=-1,
-        backlight_session_id_mutex=QtCore.QMutex(),
-        menu=None,
-        actions=easydict.EasyDict(),
-        actions_mutex=QtCore.QMutex()
-    )
-]
-
-
 app = QtWidgets.QApplication(sys.argv)
 app.setQuitOnLastWindowClosed(False)
 
@@ -85,31 +50,54 @@ tray = QtWidgets.QSystemTrayIcon()
 tray.setIcon(QtGui.QIcon(path + '/icon.png'))
 tray.setVisible(True)
 tray_menu = QtWidgets.QMenu()
-for k in keyboards:
+for k in keyboards.keyboards:
     keyboard_menu = QtWidgets.QMenu(k.name)
     keyboard_menu.setEnabled(False)
     k.menu = keyboard_menu
     keyboard_handness_action = QtWidgets.QAction('Handedness', checkable=True)
     keyboard_handness_action.setChecked(True)
 
-    def toggle_handness(checked):
-        with QtCore.QMutexLocker(k.handness_session_id_mutex):
-            k.handness_session_id = int(time.time())
-            send_message(k, easydict.EasyDict(
-                session_id=k.handness_session_id, command='handness', arguments=[int(checked)]))
-    keyboard_handness_action.toggled.connect(toggle_handness)
+    def toggle_handness_helper(k):
+        def toggle_handness(checked):
+            with QtCore.QMutexLocker(k.handness_session_id_mutex):
+                k.handness_session_id = int(time.time())
+                send_message(k, easydict.EasyDict(
+                    session_id=k.handness_session_id, command='handness', arguments=[int(checked)]))
+        return toggle_handness
+    keyboard_handness_action.toggled.connect(toggle_handness_helper(k))
     keyboard_menu.addAction(keyboard_handness_action)
     k.actions.handness_action = keyboard_handness_action
     keyboard_backlight_action = QtWidgets.QAction('Backlight', checkable=True)
 
-    def toggle_backlight(checked):
-        with QtCore.QMutexLocker(k.backlight_session_id_mutex):
-            k.backlight_session_id = int(time.time())
-            send_message(k, easydict.EasyDict(
-                session_id=k.backlight_session_id, command='backlight', arguments=[int(checked)]))
-    keyboard_backlight_action.toggled.connect(toggle_backlight)
+    def toggle_backlight_helper(k):
+        def toggle_backlight(checked):
+            with QtCore.QMutexLocker(k.backlight_session_id_mutex):
+                k.backlight_session_id = int(time.time())
+                send_message(k, easydict.EasyDict(
+                    session_id=k.backlight_session_id, command='backlight', arguments=[int(checked)]))
+        return toggle_backlight
+    keyboard_backlight_action.toggled.connect(toggle_backlight_helper(k))
     keyboard_menu.addAction(keyboard_backlight_action)
     k.actions.backlight_action = keyboard_backlight_action
+    keyboard_master_action = QtWidgets.QAction('Master', checkable=True)
+
+    def toggle_master_helper(k):
+        def toggle_master(checked):
+            if checked:
+                for t in keyboards.keyboards:
+                    send_message(t, easydict.EasyDict(
+                        session_id=int(time.time()), command='slave', arguments=[int(k != t)]))
+                    t.actions.master_action.setChecked(k == t)
+            else:
+                if not any(t.actions.master_action.isChecked() for t in keyboards.keyboards):
+                    for t in keyboards.keyboards:
+                        send_message(t, easydict.EasyDict(
+                            session_id=int(time.time()), command='slave', arguments=[0]))
+        return toggle_master
+    keyboard_master_action.toggled.connect(toggle_master_helper(k))
+    keyboard_menu.addAction(keyboard_master_action)
+    k.actions.master_action = keyboard_master_action
+
     tray_menu.addMenu(keyboard_menu)
 tray_quit_action = QtWidgets.QAction('Quit')
 tray_quit_action.triggered.connect(app.quit)
@@ -140,7 +128,7 @@ def send_message(k, m):
                 map(str, [m.session_id, m.command] + m.arguments))
             log('%s: "%s" is being sent.' % (k.name, m))
             if (len(m) > 32):
-                notify('%s: This message is too large.' % k.name)
+                log('%s: This message is too large.' % k.name)
                 exit(-1)
             m = [ord(c)for c in m]
             m = m + [0] * (32 - len(m))
@@ -154,7 +142,7 @@ def send_message(k, m):
 
 def handle_message(k, m):
     if m.command == 'confusion':
-        log('%s: A message with session id %d can\'t be processed by %d.' %
+        log('%s: A message with session id %d can\'t be processed by %s.' %
             (k.name, m.session_id, k.name))
     elif m.command == 'heartbeat':
         with QtCore.QMutexLocker(k.heartbeat_session_id_mutex):
@@ -166,15 +154,15 @@ def handle_message(k, m):
         languages = {'english': 'com.apple.keylayout.ABC',
                      'chinese': 'com.apple.inputmethod.SCIM.ITABC'}
         if len(m.arguments) != 1 or m.arguments[0] not in languages.keys():
-            notify('%s: The language switching failed due to an illegal message format.' %
+            log('%s: The language switching failed due to an illegal message format.' %
                    k.name)
         else:
             if subprocess.call([path+'/swim/.build/release/swim',
                                 'use', languages[m.arguments[0]]]):
-                notify('%s: The language switching failed due to failure on calling swim.' %
+                log('%s: The language switching failed due to failure on calling swim.' %
                        k.name)
             else:
-                notify('%s: The language is now %s.' %
+                log('%s: The language is now %s.' %
                        (k.name, m.arguments[0]))
     elif m.command == 'handness':
         if len(m.arguments) != 1:
@@ -241,13 +229,36 @@ def handle_message(k, m):
             log('%s: This notify is corrupted.' % k.name)
         else:
             notify('%s: %s' % (k.name, m.arguments[0]))
+    elif m.command == 'slave':
+        if len(m.arguments) == 1 and m.arguments[0] == 'success':
+            log('%s: This slave is successful.' % k.name)
+        elif len(m.arguments) == 1 and m.arguments[0] == 'failure':
+            log('%s: This slave is failed.' % k.name)
+        else:
+            log('%s: This slave is corrupted.' % k.name)
+    elif m.command == 'key':
+        try:
+            row, col, pressed = list(map(int, m.arguments))
+        except:
+            log('%s: This key is corrupted.' % k.name)
+            return True
+        t = [t for t in keyboards.keyboards if t.actions.master_action.isChecked()]
+        if len(t) != 1:
+            log('%s: There are more than one masters, or there is no one.' % k.name)
+        else:
+            p = key_translator.translate(k, t[0], (row, col))
+            if p:
+                send_message(t[0], easydict.EasyDict(
+                    session_id=int(time.time()), command='key', arguments=p+[pressed, ]))
+            else:
+                log('%s: The key press can\'t be translated.' % k.name)
     else:
         return False
     return True
 
 
 def receive_messages():
-    for k in keyboards:
+    for k in keyboards.keyboards:
         if k.interface:
             while True:
                 try:
@@ -279,7 +290,7 @@ receive_messages_timer = timer(0.005, receive_messages)
 
 def five_secondly_routine():
     application = None
-    for k in keyboards:
+    for k in keyboards.keyboards:
         with QtCore.QMutexLocker(k.interface_mutex):
             if k.interface:
                 if not application:
@@ -357,12 +368,12 @@ class ReviewTimer(QtCore.QThread):
     def run(self):
         while True:
             now = time.perf_counter()
-            for i, k in enumerate(keyboards):
+            for i, k in enumerate(keyboards.keyboards):
                 log('%s: The review of %s is starting.' % (k.name, k.name))
                 if k.interface:
                     with QtCore.QMutexLocker(k.heartbeat_session_id_mutex):
                         if k.heartbeat_session_id != -1:
-                            notify('%s: The keyboard is lost.' % k.name)
+                            log('%s: The keyboard is lost.' % k.name)
                             with QtCore.QMutexLocker(k.interface_mutex):
                                 k.interface.close()
                                 k.interface = None
@@ -377,7 +388,7 @@ class ReviewTimer(QtCore.QThread):
                                 d.open(k.vendor_id, k.product_id)
                                 d.set_nonblocking(1)
                                 k.interface = d
-                            notify('%s: The keyboard is connected.' % k.name)
+                            log('%s: The keyboard is connected.' % k.name)
                             send_message(k, easydict.EasyDict(
                                 session_id=int(time.time()), command='time', arguments=[]))
                             self.connected.emit(i)
@@ -394,8 +405,10 @@ class ReviewTimer(QtCore.QThread):
 
 
 review_timer = ReviewTimer(1)
-review_timer.lost.connect(lambda i: keyboards[i].menu.setEnabled(False))
-review_timer.connected.connect(lambda i: keyboards[i].menu.setEnabled(True))
+review_timer.lost.connect(
+    lambda i: keyboards.keyboards[i].menu.setEnabled(False))
+review_timer.connected.connect(
+    lambda i: keyboards.keyboards[i].menu.setEnabled(True))
 
 
 receive_messages_timer.start()

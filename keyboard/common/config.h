@@ -1,6 +1,7 @@
 #pragma once
 
 #define TAPPING_TOGGLE 2
+#define TAP_CODE_DELAY 10
 
 #define NO_ACTION_MACRO
 #define NO_ACTION_FUNCTION

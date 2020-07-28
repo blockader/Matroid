@@ -39,7 +39,7 @@ else
 fi
 qmk compile -kb $alias -km blockader
 if [ $keyboard == matrix_noah ]; then
-    echo The firmware for Matrix Noah can\'t be automatically uploaded. You need to write a new bootloader for the reset operation to work and implement sending the reset command from the computer.
+    echo The firmware for Matrix Noah can\'t be automatically uploaded. You need to write a new bootloader for the resetting operation to work and implement sending the reset command from the computer.
     echo Please reset your keyboard by keeping pressing the top-left key and while plugging in the wire.
     if [ $os == Darwin ]; then
         while true; do
@@ -54,7 +54,7 @@ if [ $keyboard == matrix_noah ]; then
         exit 1
     fi
 elif [ $keyboard == new_poker ]; then
-    echo The firmware for New Poker can\'t be automatically uploaded. You need to implement sending the reset command from the computer and figure out how to automatically upload the firmware.
+    echo The firmware for New Poker can\'t be automatically uploaded. You need to implement sending the resetting command from the computer and figure out how to automatically upload the firmware.
     echo Please reset your keyboard by pressing the key that produces the RESET key code.
     if [ $os == Darwin ]; then
         echo Please use QMK Tool Box to upload the firmware.

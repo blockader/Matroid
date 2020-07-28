@@ -7,18 +7,18 @@
     k30, k32, k33, k34, k35, k36, k37, k38, k39, k3a, k3b, k3d, \
     k40, k41, k43, k46, k4a, k4b, k4d, k4e \
 ) { \
-    { k00, k01, k02, k03, k04, k05, k06, k07, k08, k09, k0a, k0b, k0c, KC_NO, k0e}, \
-    { k10, KC_NO, k12, k13, k14, k15, k16, k17, k18, k19, k1a, k1b, k1c, k1d, k1e}, \
-    { k20, KC_NO, k22, k23, k24, k25, k26, k27, k28, k29, k2a, k2b, k2c, k2d, KC_NO}, \
-    { k30, KC_NO, k32, k33, k34, k35, k36, k37, k38, k39, k3a, k3b, KC_NO, k3d, KC_NO}, \
-    { k40, k41, KC_NO, k43, KC_NO, KC_NO, k46, KC_NO, KC_NO, KC_NO, k4a, k4b, KC_NO, k4d, k4e} \
+    {k00, k01, k02, k03, k04, k05, k06, k07, k08, k09, k0a, k0b, k0c, KC_NO, k0e}, \
+    {k10, KC_NO, k12, k13, k14, k15, k16, k17, k18, k19, k1a, k1b, k1c, k1d, k1e}, \
+    {k20, KC_NO, k22, k23, k24, k25, k26, k27, k28, k29, k2a, k2b, k2c, k2d, KC_NO}, \
+    {k30, KC_NO, k32, k33, k34, k35, k36, k37, k38, k39, k3a, k3b, KC_NO, k3d, KC_NO}, \
+    {k40, k41, KC_NO, k43, KC_NO, KC_NO, k46, KC_NO, KC_NO, KC_NO, k4a, k4b, KC_NO, k4d, k4e} \
 }
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYER_NORM_BASE] = KEYMAP_PERMUTE(
         KC_HASH, KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KEY_DANCE(DANCE_PGDN_BOTTOM), KEY_DANCE(DANCE_PGUP_TOP), KEY_DELETE_LINE,
         KC_LBRC, KC_Q, KC_W, KC_F, KC_P, KC_G, KC_J, KC_L, KC_U, KC_Y, KC_SCLN, KC_RBRC, KC_TAB, KC_BSLS,
-        KEY_FORWARD_LAYER(LAYER_NORM_EXTENSION), KC_A, KC_R, KC_S, KC_T, KC_D, KC_H, KC_N, KC_E, KC_I, KC_O, KEY_FORWARD_LAYER(LAYER_NORM_EXTENSION), KC_ENT,
+        TRAIT_LEFT(KEY_FORWARD_LAYER(LAYER_NORM_EXTENSION)), KC_A, KC_R, KC_S, KC_T, KC_D, KC_H, KC_N, KC_E, KC_I, KC_O, TRAIT_RIGHT(KEY_FORWARD_LAYER(LAYER_NORM_EXTENSION)), KC_ENT,
         KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_B, KC_K, KC_M, KC_COMM, KC_DOT, KC_QUOT, KC_RSFT,
         KC_LCTL, KC_LGUI, KC_LALT, KC_SPC, KC_RALT, KC_RGUI, KEY_FORWARD_LAYER(LAYER_CONTROL), KEY_FORWARD_LAYER(LAYER_RACE_BASE)
     ),

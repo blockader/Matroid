@@ -74,8 +74,8 @@ qk_tap_dance_action_t tap_dance_actions[] = {
 
 #define KEY_DANCE(a) TD(a)
 
-#define KEY_LSPC KC_SPC
-#define KEY_RSPC KC_SPC
+#define TRAIT_LEFT(a) a
+#define TRAIT_RIGHT(a) a
 
 enum custom_keycodes {
     KEY_BACK_LAYER = SAFE_RANGE + NUMBER_OF_LAYERS,
@@ -102,12 +102,17 @@ char send_message_buffer[RAW_EPSIZE + 1];
 void send_message(const struct message *m) {
     memset(send_message_buffer, 0, RAW_EPSIZE + 1);
     if (m->arguments[0])
-        sprintf(send_message_buffer, INT32_SPECIFIER " %s %s", m->session_id,
-                m->command, m->arguments);
+        sprintf(send_message_buffer, "%ld %s %s", m->session_id, m->command,
+                m->arguments);
     else
-        sprintf(send_message_buffer, INT32_SPECIFIER " %s", m->session_id,
-                m->command);
+        sprintf(send_message_buffer, "%ld %s", m->session_id, m->command);
     raw_hid_send((uint8_t *)send_message_buffer, RAW_EPSIZE);
+}
+
+void send_confusion(struct message *m) {
+    m->command = "confusion";
+    m->arguments[0] = 0;
+    send_message(m);
 }
 
 void handle_message(struct message *m) {
@@ -116,9 +121,7 @@ void handle_message(struct message *m) {
     else if (!strcmp(m->command, "handness")) {
         int v;
         if (sscanf(m->arguments, "%d", &v) != 1 || v < -1 || v > 1) {
-            m->command = "confusion";
-            m->arguments[0] = 0;
-            send_message(m);
+            send_confusion(m);
         } else {
             if (v == -1)
                 sprintf(m->arguments, "%d",
@@ -134,9 +137,7 @@ void handle_message(struct message *m) {
     } else if (!strcmp(m->command, "backlight")) {
         int v;
         if (sscanf(m->arguments, "%d", &v) != 1 || v < -1 || v > 1) {
-            m->command = "confusion";
-            m->arguments[0] = 0;
-            send_message(m);
+            send_confusion(m);
         } else {
             if (v == -1)
                 sprintf(m->arguments, "%d",
@@ -162,9 +163,7 @@ void handle_message(struct message *m) {
         int v;
         if (sscanf(m->arguments, "%d", &v) != 1 || v < 0 ||
             v >= NUMBER_OF_APPLICATIONS) {
-            m->command = "confusion";
-            m->arguments[0] = 0;
-            send_message(m);
+            send_confusion(m);
         } else {
             common_layer_data.application = v;
             m->arguments = "success";
@@ -173,37 +172,62 @@ void handle_message(struct message *m) {
     } else if (!strcmp(m->command, "slave")) {
         int v;
         if (sscanf(m->arguments, "%d", &v) != 1 || v < 0 || v > 1) {
-            m->command = "confusion";
-            m->arguments[0] = 0;
-            send_message(m);
+            send_confusion(m);
         } else {
             common_layer_data.slave = v;
             m->arguments = "success";
             send_message(m);
         }
+    } else if (!strcmp(m->command, "key")) {
+        int x, y, p;
+        if (sscanf(m->arguments, "%d %d %d", &x, &y, &p) != 3 || x < 0 ||
+            y < 0 || x >= MATRIX_ROWS || y >= MATRIX_COLS) {
+            send_confusion(m);
+        } else {
+            keyrecord_t k;
+            k.event.pressed = p;
+            k.event.key.row = x;
+            k.event.key.col = y;
+            process_record(&k);
+            m->arguments = "success";
+            send_message(m);
+        }
     } else {
-        m->command = "confusion";
-        m->arguments[0] = 0;
-        send_message(m);
+        send_confusion(m);
     }
 }
 
 void raw_hid_receive(uint8_t *data, uint8_t length) {
     struct message m;
-    char c[RAW_EPSIZE + 1], a[RAW_EPSIZE + 1];
-    m.command = c;
+    char a[RAW_EPSIZE + 1];
+    m.session_id = 0;
     m.arguments = a;
-    if (sscanf((char *)data, INT32_SPECIFIER "%s%s", &m.session_id, c, a) == 3)
-        handle_message(&m);
-    else if (sscanf((char *)data, INT32_SPECIFIER "%s", &m.session_id, c) ==
-             2) {
-        a[0] = 0;
-        handle_message(&m);
-    } else {
-        m.command = "confusion";
-        a[0] = 0;
-        send_message(&m);
+    int p = 0;
+    if (data[p] < '0' || data[p] > '9') {
+        send_confusion(&m);
+        return;
     }
+    for (; data[p] && data[p] >= '0' && data[p] <= '9'; ++p)
+        m.session_id = m.session_id * 10 + (data[p] - '0');
+    if (!data[p] || data[p] != ' ') {
+        send_confusion(&m);
+        return;
+    }
+    for (; data[p] && data[p] == ' '; ++p)
+        ;
+    if (!data[p]) {
+        send_confusion(&m);
+        return;
+    }
+    m.command = (char *)data + p;
+    for (; data[p] && data[p] != ' '; ++p)
+        ;
+    if (data[p])
+        data[p++] = 0;
+    for (; data[p] && data[p] == ' '; ++p)
+        ;
+    strcpy(a, (char *)data + p);
+    handle_message(&m);
 }
 
 extern const int8_t handness[MATRIX_ROWS][MATRIX_COLS];
@@ -414,6 +438,7 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
             }
             return false;
         case KC_LEFT:
+        case KC_RIGHT:
             if (layer_control_data.operator== - 1 &&
                 layer_control_data.multiplier == 0)
                 return true;
@@ -423,22 +448,22 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
                                              ? layer_control_data.multiplier
                                              : 1);
                          ++i)
-                        tap_code(KC_LEFT);
+                        tap_code(key);
                 else if (layer_control_data.operator== KC_BSPC) {
                     for (int i = 0; i < (layer_control_data.multiplier
                                              ? layer_control_data.multiplier
                                              : 1);
                          ++i)
-                        tap_code16(LSFT(KC_LEFT));
+                        tap_code16(LSFT(key));
                     tap_code16(LGUI(KC_X));
                 } else if (layer_control_data.operator== LGUI(KC_C)) {
                     for (int i = 0; i < (layer_control_data.multiplier
                                              ? layer_control_data.multiplier
                                              : 1);
                          ++i)
-                        tap_code16(LSFT(KC_LEFT));
+                        tap_code16(LSFT(key));
                     tap_code16(LGUI(KC_C));
-                    tap_code(KC_RIGHT);
+                    tap_code(key == KC_RIGHT ? KC_LEFT : KC_RIGHT);
                 }
                 layer_control_data.multiplier = 0;
                 layer_control_data.operator= - 1;
@@ -507,37 +532,6 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
                     tap_code16(LSFT(LCTL(KC_E)));
                     tap_code16(LGUI(KC_C));
                     tap_code(KC_RIGHT);
-                }
-                layer_control_data.multiplier = 0;
-                layer_control_data.operator= - 1;
-            }
-            return false;
-        case KC_RIGHT:
-            if (layer_control_data.operator== - 1 &&
-                layer_control_data.multiplier == 0)
-                return true;
-            if (record->event.pressed) {
-                if (layer_control_data.operator== - 1)
-                    for (int i = 0; i < (layer_control_data.multiplier
-                                             ? layer_control_data.multiplier
-                                             : 1);
-                         ++i)
-                        tap_code(KC_RIGHT);
-                else if (layer_control_data.operator== KC_BSPC) {
-                    for (int i = 0; i < (layer_control_data.multiplier
-                                             ? layer_control_data.multiplier
-                                             : 1);
-                         ++i)
-                        tap_code16(LSFT(KC_RIGHT));
-                    tap_code16(LGUI(KC_X));
-                } else if (layer_control_data.operator== LGUI(KC_C)) {
-                    for (int i = 0; i < (layer_control_data.multiplier
-                                             ? layer_control_data.multiplier
-                                             : 1);
-                         ++i)
-                        tap_code16(LSFT(KC_RIGHT));
-                    tap_code16(LGUI(KC_C));
-                    tap_code(KC_LEFT);
                 }
                 layer_control_data.multiplier = 0;
                 layer_control_data.operator= - 1;
@@ -1098,8 +1092,9 @@ bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
 bool process_record_user(uint16_t key, keyrecord_t *record) {
     if (common_layer_data.slave) {
         memset(send_message_buffer, 0, RAW_EPSIZE + 1);
-        sprintf(send_message_buffer, "%d slave %d %d", timer_read(),
-                record->event.key.row, record->event.key.col);
+        sprintf(send_message_buffer, "%d key %d %d %d", timer_read(),
+                record->event.key.row, record->event.key.col,
+                (int)record->event.pressed);
         raw_hid_send((uint8_t *)send_message_buffer, RAW_EPSIZE);
         return false;
     }
@@ -1127,14 +1122,15 @@ void keyboard_post_init_user() {
 }
 
 void matrix_scan_user() {
-    if (timer_elapsed(common_layer_data.last_repeat_time) >
-        common_layer_data.last_repeat_interval) {
-        tap_code16(common_layer_data.last_repeat_key);
+    if (common_layer_data.last_repeat_key &&
+        timer_elapsed(common_layer_data.last_repeat_time) >
+            common_layer_data.last_repeat_interval) {
         common_layer_data.last_repeat_time = timer_read();
+        tap_code16(common_layer_data.last_repeat_key);
         if (common_layer_data.last_repeat_interval == 500)
             common_layer_data.last_repeat_interval =
                 common_layer_data.last_repeat_interval / 27 * 8;
-        else {
+        else if (common_layer_data.last_repeat_interval != 50) {
             common_layer_data.last_repeat_interval =
                 common_layer_data.last_repeat_interval / 3 * 2;
             if (common_layer_data.last_repeat_interval < 50)
