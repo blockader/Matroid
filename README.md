@@ -4,7 +4,8 @@ This repo includes keyboard firmware code to largely enhance QMK-based customize
 1. The keymaps are optimized based on Colemak to support fast typing for programming. The location of most common symbols for programming are placed closer to the center. The symbols are actually sharing keys with letters with support from two additional modifiers.
 2. It includes multiple layers to handle different situations, for example, a layer that works almost the same as Vim in its normal mode and a layer that is for TypeRacer only.
 3. The keyboard will constantly communicate with the OS to perform more user-friendly operations. For example, the keyboard will behave differently based on the current focused application. The OS will also change its state, for example, switching the input source, based on the current layer.
-4. It also have some details to help improve typing. For example, some keys will be disabled based on the position of the previously pressed modifier key to guide the user to efficiently use both hands. For a keyboard with a split spacebar, one of the space key may be disabled.
+4. Multiple keyboards can share internal states (current layer, current modifieres, all settings, etc.). This means using one keyboard each hand will be very enjoyble. You may ask why would anyone want to use two keyboards at the same time. The reason is exactly the same as why we use split keyboards. The positions of the wrists will be more healthy and the typing will be easier.
+5. It also have some details to help improve typing. For example, some keys will be disabled based on the position of the previously pressed modifier key to guide the user to efficiently use both hands. For a keyboard with a split spacebar, one of the space key may be disabled.
 ##
 # Structure
 ## keyboard/*/keymap.c
@@ -19,7 +20,7 @@ This code implements a GUI keyboard manager using PyQt.
 This code installs the keyboard manager, handling all details.
 # My Favourite Keyboards
 ## New Poker
-![New Poker](keyboard/poker/keyboard.jpg)
+![New Poker](keyboard/new_poker/keyboard.jpg)
 There are several versions of Poker. My one is New Poker and the picture above is New Poker II. The New Poker seems to have the most freedom in customizing the keymap. However, I replaced its PCB with a DZ60 with QMK support in the end.
 ## Matrix Noah
 ![Matrix Noah](keyboard/matrix_noah/keyboard.jpg)
