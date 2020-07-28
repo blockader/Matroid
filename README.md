@@ -20,7 +20,7 @@ This code implements a GUI keyboard manager using PyQt.
 This code installs the keyboard manager, handling all details.
 # My Favourite Keyboards
 ## New Poker
-![New Poker](keyboard/poker/keyboard.jpg)
+![New Poker](keyboard/new_poker/keyboard.jpg)
 There are several versions of Poker. My one is New Poker and the picture above is New Poker II. The New Poker seems to have the most freedom in customizing the keymap. However, I replaced its PCB with a DZ60 with QMK support in the end.
 ## Matrix Noah
 ![Matrix Noah](keyboard/matrix_noah/keyboard.jpg)
