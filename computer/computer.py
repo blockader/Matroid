@@ -88,11 +88,13 @@ for k in keyboards.keyboards:
                     send_message(t, easydict.EasyDict(
                         session_id=int(time.time()), command='slave', arguments=[int(k != t)]))
                     t.actions.master_action.setChecked(k == t)
+                receive_messages_timer.interval = 0.001
             else:
                 if not any(t.actions.master_action.isChecked() for t in keyboards.keyboards):
                     for t in keyboards.keyboards:
                         send_message(t, easydict.EasyDict(
                             session_id=int(time.time()), command='slave', arguments=[0]))
+                    receive_messages_timer.interval = 0.005
         return toggle_master
     keyboard_master_action.toggled.connect(toggle_master_helper(k))
     keyboard_menu.addAction(keyboard_master_action)
@@ -155,15 +157,15 @@ def handle_message(k, m):
                      'chinese': 'com.apple.inputmethod.SCIM.ITABC'}
         if len(m.arguments) != 1 or m.arguments[0] not in languages.keys():
             log('%s: The language switching failed due to an illegal message format.' %
-                   k.name)
+                k.name)
         else:
             if subprocess.call([path+'/swim/.build/release/swim',
                                 'use', languages[m.arguments[0]]]):
                 log('%s: The language switching failed due to failure on calling swim.' %
-                       k.name)
+                    k.name)
             else:
                 log('%s: The language is now %s.' %
-                       (k.name, m.arguments[0]))
+                    (k.name, m.arguments[0]))
     elif m.command == 'handness':
         if len(m.arguments) != 1:
             log('%s: This handness is corrupted.' % k.name)
