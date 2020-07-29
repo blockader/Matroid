@@ -45,7 +45,7 @@ enum Application {
 struct {
     bool ended, handness_enabled, backlight_enabled, slave;
     int8_t last_nonspace_handness, modifier_handness;
-    uint8_t os, application;
+    uint8_t os, application; // TODO: OS auto dectection and key adaptation. For example, for Windows, CTL and GUI should be swapped. This should be done by defining new keycodes and handling them.
     uint16_t last_repeat_key;
     int last_nonspace_time, last_repeat_time, last_repeat_interval;
 } common_layer_data;
