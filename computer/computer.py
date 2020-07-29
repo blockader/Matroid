@@ -171,7 +171,7 @@ def handle_message(k, m):
             log('%s: This handness is corrupted.' % k.name)
         elif m.arguments[0].isdigit():
             with QtCore.QMutexLocker(k.actions_mutex):
-                k.actions.handness_action.setChecked(int(m.arguments[0]))
+                k.actions.handness_action.setChecked(int(m.arguments[0])) # TODO: Use a signal to communicate with the GUI thread instead, otherwise this is not thread safe.
                 log('%s: Handness is now %s.' %
                     (k.name, 'on' if k.actions.handness_action.isChecked() else 'off'))
         else:
@@ -238,7 +238,7 @@ def handle_message(k, m):
             log('%s: This slave is failed.' % k.name)
         else:
             log('%s: This slave is corrupted.' % k.name)
-    elif m.command == 'key':
+    elif m.command == 'key': # TODO: The overhead can hurt typing when the typing speed is very fast.
         try:
             row, col, pressed = list(map(int, m.arguments))
         except:

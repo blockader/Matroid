@@ -781,7 +781,7 @@ void register_shift(uint8_t s) {
 }
 
 bool handle_common_key(uint16_t key, keyrecord_t *record) {
-    switch (key) {
+    switch (key) { // TODO: This is an awful way to have some shifted keys work the same as they are in the extension layer. It's better to look up at the keymaps array.
     case KC_HASH:
         if (record->event.pressed) {
             uint8_t s = unregister_shift();
@@ -989,7 +989,7 @@ bool handle_handness_start(uint16_t key, keyrecord_t *record) {
                 handness[record->event.key.row][record->event.key.col];
         else
             common_layer_data.modifier_handness = 0;
-        common_layer_data.modifier_handness = 0;
+        common_layer_data.modifier_handness = 0; // TODO: There should be a config variable instead of manually turning it off.
     } else if (!modifier(key)) {
         if (record->event.pressed) {
             if (handness[record->event.key.row][record->event.key.col] *
@@ -1046,7 +1046,7 @@ bool handle_handness_end(uint16_t key, keyrecord_t *record) {
         } else {
             common_layer_data.modifier_handness = 0;
         }
-        common_layer_data.modifier_handness = 0;
+        common_layer_data.modifier_handness = 0; // TODO: There should be a config variable instead of manually turning it off.
         return true;
     }
     return true;
