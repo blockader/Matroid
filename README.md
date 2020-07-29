@@ -10,6 +10,8 @@ This repo includes keyboard firmware code to largely enhance QMK-based (an open-
 6. Some useful features like double tapping are missing. When I double tapping the page down key in my keyboard, it actually goes to the end of the document. Although this is not necessary, I find it very interesting and user-friendly. If your have a custmized keyboard with QMK support, then you can write you own C code to achieve this and more.
 ## What should we do?
 As a computer programmer, I type a lot every day. So the efficiency matters. There are many ways to solve some of these problems. I am doing things in the firmware. Please check out Karabiner-Elements for hardware independent solution. Vim and Emacs with careful configuration can also help in some cases. The advantage of modifying the firmware is that you don't have to develop and install any software on a new computer/OS to make most things work. I can easily plug my keyboard in an iPad and start to take notes with my keyboard features. Although a few advanced functions do require a keyboard manager I implemented below.
+
+Some problems can only be solved with new hardware design. See ones like ErgoDox and ortholinear keyboards.
 # Features
 1. The keymaps are optimized based on Colemak to support fast typing for programming. The location of most common symbols for programming are placed closer to the center and additional usesful keys are added. The symbols are actually sharing keys with letters with support from two additional modifiers.
 2. It includes multiple layers to handle different situations, for example, a layer that works almost the same as Vim in its normal mode and a layer that is for TypeRacer only.
