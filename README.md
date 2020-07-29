@@ -1,7 +1,16 @@
 # Matroid
 This repo includes keyboard firmware code to largely enhance QMK-based customized keyboards and GUI software to manage them. The configuration is very personal but the code can easily be reused for those who are familiar with QMK. All code is designed to work on MacOS, Linux and Windows without modification. But some implementation is still on the way. This is an ongoing project out of pure interest. I am also planning to work on keyboard hardware in the future. The goal would be split keyboards.
+# Motivation
+## What are the drawbacks of the common keyboards?
+1. The pinky fingers are under too much burden, especially the right one, and the thumbs are too free.
+2. Some useful keys such as arrow keys are too far to reach. And keys for moving to the previous/next word, moving to the beginning or end of the line and erasing the whole line don't even exist. These keys can be useful for fast typing. I know some shortcuts may work, but they vary in different OSs or even applications and are not handy. It would be good to provide a unified solution.
+3. Two hands are too close to make long time typing not comfortable.
+4. The keys are not aligned. This is not a clever design but merely path dependency.
+5. The locations of the keys are designed to slow down typing. See Colemak or Dvorak.
+## What should we do?
+As a computer programmer, I type a lot every day. So the efficiency matters. There are many ways to solve some of these problems. I am doing things in the firmware. Please check out Karabiner-Elements for hardware independent solution. The advantage of modifying the firmware is that you don't have to install any software on a new computer to make most things work. Although some advanced functions do require a keyboard manager I implemented below.
 # Features
-1. The keymaps are optimized based on Colemak to support fast typing for programming. The location of most common symbols for programming are placed closer to the center. The symbols are actually sharing keys with letters with support from two additional modifiers.
+1. The keymaps are optimized based on Colemak to support fast typing for programming. The location of most common symbols for programming are placed closer to the center and additional usesful keys are added. The symbols are actually sharing keys with letters with support from two additional modifiers.
 2. It includes multiple layers to handle different situations, for example, a layer that works almost the same as Vim in its normal mode and a layer that is for TypeRacer only.
 3. The keyboard will constantly communicate with the OS to perform more user-friendly operations. For example, the keyboard will behave differently based on the current focused application. The OS will also change its state, for example, switching the input source, based on the current layer.
 4. Multiple keyboards can share internal states (current layer, current modifieres, all settings, etc.). This means using one keyboard each hand will be very enjoyble. You may ask why would anyone want to use two keyboards at the same time. The reason is exactly the same as why we use split keyboards. The positions of the wrists will be more healthy and the typing will be easier.
