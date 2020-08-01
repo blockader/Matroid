@@ -30,6 +30,8 @@ This code compiles and installs the firmware, handling all details.
 This code implements a GUI keyboard manager using PyQt.
 ## computer/install.h
 This code installs the keyboard manager, handling all details.
+# Future Work
+I really want to do an automatic layout search for coding. This requires two things. One is a accurate enough model of hands and their movement. The other is a lot of data. The second one is apparently easy. The first one should not be very hard but I don't have time yet.
 # My Favourite Keyboards
 ## New Poker
 ![New Poker](keyboard/new_poker/keyboard.jpg)
