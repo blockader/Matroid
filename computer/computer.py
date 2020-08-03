@@ -171,7 +171,8 @@ def handle_message(k, m):
             log('%s: This handness is corrupted.' % k.name)
         elif m.arguments[0].isdigit():
             with QtCore.QMutexLocker(k.actions_mutex):
-                k.actions.handness_action.setChecked(int(m.arguments[0])) # TODO: Use a signal to communicate with the GUI thread instead, otherwise this is not thread safe.
+                # TODO: Use a signal to communicate with the GUI thread instead, otherwise this is not thread safe.
+                k.actions.handness_action.setChecked(int(m.arguments[0]))
                 log('%s: Handness is now %s.' %
                     (k.name, 'on' if k.actions.handness_action.isChecked() else 'off'))
         else:
@@ -238,7 +239,8 @@ def handle_message(k, m):
             log('%s: This slave is failed.' % k.name)
         else:
             log('%s: This slave is corrupted.' % k.name)
-    elif m.command == 'key': # TODO: The overhead can hurt typing when the typing speed is very fast.
+    # TODO: The overhead can hurt typing when the typing speed is very fast.
+    elif m.command == 'key':
         try:
             row, col, pressed = list(map(int, m.arguments))
         except:
@@ -290,21 +292,26 @@ def receive_messages():
 receive_messages_timer = timer(0.005, receive_messages)
 
 
+current_application = None
+
+
 def five_secondly_routine():
-    application = None
+    global current_application
+    old_application = current_application
+    if sys.platform == 'darwin':
+        current_application = subprocess.run(['osascript', '-e', 'tell application "System Events"', '-e',
+                                              'set t to name of first application process whose frontmost is true', '-e', 'end tell'], stdout=subprocess.PIPE).stdout.strip().decode()
+    else:
+        log('%s is not a supported OS.' % sys.platform)
+    log('The current application is %s.' % current_application)
+    if current_application != old_application and False:
+        subprocess.call([path+'/swim/.build/release/swim',
+                         'use', 'com.apple.keylayout.ABC'])
     for k in keyboards.keyboards:
         with QtCore.QMutexLocker(k.interface_mutex):
             if k.interface:
-                if not application:
-                    if sys.platform == 'darwin':
-                        application = subprocess.run(['osascript', '-e', 'tell application "System Events"', '-e',
-                                                      'set t to name of first application process whose frontmost is true', '-e', 'end tell'], stdout=subprocess.PIPE).stdout.strip().decode()
-                    else:
-                        log('%s is not a supported OS.' % sys.platform)
-                    log('The current application is %s.' % application)
-                    application = {'Terminal': 1}.get(application, 0)
                 send_message(k, easydict.EasyDict(
-                    session_id=int(time.time()), command='application', arguments=[application]))
+                    session_id=int(time.time()), command='application', arguments=[{'Terminal': 1}.get(current_application, 0)]))
 
 
 five_secondly_routine_timer = timer(5, five_secondly_routine)
