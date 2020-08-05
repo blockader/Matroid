@@ -921,10 +921,6 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
         return false;
     case KEY_DELETE_WORD:
         if (record->event.pressed) {
-            register_code(KC_LALT);
-            tap_code(KC_LEFT);
-            tap_code(KC_RIGHT);
-            unregister_code(KC_LALT);
             tap_code16(LSFT(LALT(KC_LEFT)));
             tap_code(KC_BSPC);
         }
