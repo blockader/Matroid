@@ -45,7 +45,10 @@ enum Application {
 struct {
     bool ended, handness_enabled, backlight_enabled, slave;
     int8_t last_nonspace_handness, modifier_handness;
-    uint8_t os, application; // TODO: OS auto dectection and key adaptation. For example, for Windows, CTL and GUI should be swapped. This should be done by defining new keycodes and handling them.
+    uint8_t os, application; // TODO: OS auto dectection and key adaptation. For
+                             // example, for Windows, CTL and GUI should be
+                             // swapped. This should be done by defining new
+                             // keycodes and handling them.
     uint16_t last_repeat_key;
     int last_nonspace_time, last_repeat_time, last_repeat_interval;
 } common_layer_data;
@@ -783,7 +786,9 @@ void register_shift(uint8_t s) {
 }
 
 bool handle_common_key(uint16_t key, keyrecord_t *record) {
-    switch (key) { // TODO: This is an awful way to have some shifted keys work the same as they are in the extension layer. It's better to look up at the keymaps array.
+    switch (key) { // TODO: This is an awful way to have some shifted keys work
+                   // the same as they are in the extension layer. It's better
+                   // to look up at the keymaps array.
     case KC_HASH:
         if (record->event.pressed) {
             uint8_t s = unregister_shift();
@@ -962,6 +967,18 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
         if (record->event.pressed)
             tap_code16(translate_key(KEY_MOVE_LINE_STRAT));
         return false;
+    case KC_ENT:
+        if (record->event.pressed) {
+            uint8_t s = unregister_shift();
+            if (s) {
+                tap_code16(LGUI(KC_LEFT));
+                tap_code(KC_ENTER);
+                tap_code(KC_UP);
+                register_shift(s);
+            } else
+                tap_code16(KC_ENT);
+        }
+        return false;
     }
     return true;
 }
@@ -991,7 +1008,9 @@ bool handle_handness_start(uint16_t key, keyrecord_t *record) {
                 handness[record->event.key.row][record->event.key.col];
         else
             common_layer_data.modifier_handness = 0;
-        common_layer_data.modifier_handness = 0; // TODO: There should be a config variable instead of manually turning it off.
+        common_layer_data.modifier_handness =
+            0; // TODO: There should be a config variable instead of manually
+               // turning it off.
     } else if (!modifier(key)) {
         if (record->event.pressed) {
             if (handness[record->event.key.row][record->event.key.col] *
@@ -1048,7 +1067,9 @@ bool handle_handness_end(uint16_t key, keyrecord_t *record) {
         } else {
             common_layer_data.modifier_handness = 0;
         }
-        common_layer_data.modifier_handness = 0; // TODO: There should be a config variable instead of manually turning it off.
+        common_layer_data.modifier_handness =
+            0; // TODO: There should be a config variable instead of manually
+               // turning it off.
         return true;
     }
     return true;
