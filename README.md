@@ -5,26 +5,22 @@ This repository includes keyboard firmware code (C and C++) to largely enhance Q
 1. The positions of alphabet keys are not optimized for high-speed typing.
 2. (, -, +, Enter, ↑, ←, ↓ and → are among the most used keys for programmers, but reaching them requires large hand movement from the home row.
 3. The workload on each finger is not balanced. The two thumbs are only responsible for one spacebar, while the right pinky finger has to press too many frequent keys. This could potentially cause errors.
-4. Keys for moving to the previous or next word, moving to the beginning or end of the line and erasing the whole line don't even exist. These keys can be useful for fast coding. I know some shortcuts may work, but they vary in different OSs or even applications and are not handy. It would be good to provide a unified solution.
+4. Keys for moving to the previous or next word, moving to the beginning or end of the line or erasing the whole line don't even exist. These keys can be useful for fast coding. I know some shortcuts may work, but they vary in different OSs or even applications and are not handy. It would be good to provide a unified solution.
 5. Some useful features like double tapping are missing. It would be good if I can go to the end of the document by double tap the page down key. It's much more intuitive than shortcuts. If would be even better if we can have marcos, command repeating and other advanced features.
 6. The staggered alignment came from old typewriters. This design no longer makes senses on modern keyboards and it makes some keys hard to reach.
 7. The two hands are too close which is an unnatural posture. 
 ## Existing Solutions
 1. Vim, Emacs and other similar software can solve some of the above problems. Although with the help of plugins, Vim can be used in other applications, they are still available in limited applications. I want to have the same typing experience when I am writing an email, using the terminal and even taking notes with keyboard connecting to an iPad.
-
-
-
-
-## What should we do?
-As a computer programmer, I type a lot every day. So the efficiency matters. There are many ways to solve some of these problems. I am doing things in the firmware. Please check out Karabiner-Elements for hardware independent solution. Vim and Emacs with careful configuration can also help in some cases. The advantage of modifying the firmware is that you don't have to develop and install any software on a new computer/OS to make most things work. I can easily plug my keyboard in an iPad and start to take notes with my keyboard features. Although a few advanced functions do require a keyboard manager I implemented below.
-
-Some problems can only be solved with new hardware design. See ones like ErgoDox and ortholinear keyboards.
+2. Karabiner-Elements and other similar software remaps the keys for the entire operating system. Still, they can't provide unified support across different operating systems. Besides, some of them are not flexible enough to run custom code.
+3. Custom keyboards with QMK-supported PCBs seem to be a better solution. All the implementation is in the keyborad firmware, so it works everywhere. Some custom keyboards, such as ErgoDox EZ, are split and ortholinear, which also solves the last two drawbacks. My code is based on the QMK project and it adds some advanced features.
 # Features
-1. The keymaps are optimized based on Colemak to support fast typing for programming. The location of most common symbols for programming are placed closer to the center and additional usesful keys are added. The symbols are actually sharing keys with letters with support from two additional modifiers.
-2. It includes multiple layers to handle different situations, for example, a layer that works almost the same as Vim in its normal mode and a layer that is for TypeRacer only. This means that you can enjoy the efficiency of Vim anywhere as long as you have your keyboard. No software is needed.
-3. The keyboard will constantly communicate with the OS to perform more user-friendly operations. For example, the keyboard will behave differently based on the current focused application and OS. If you press the moving-back-a-word key, the keyboard will translate it to a shortcut that the current software can recognize. The OS will also change its state, for example, switching the input source, based on the current layer.
-4. Multiple keyboards can share internal states (current layer, current modifieres, all settings, etc.). This means using one keyboard each hand will be very enjoyble. You may ask why would anyone want to use two keyboards at the same time. The reason is exactly the same as why we use split keyboards. The positions of the wrists will be more healthy and the typing will be easier.
-5. It also have some details to help improve typing. For example, some keys will be disabled based on the position of the previously pressed modifier key to guide the user to efficiently use both hands. For a keyboard with a split spacebar, one of the space key may be disabled.
+1. The keymaps are optimized based on Colemak to support fast typing for programming. The location of most common symbols for programming are placed closer to the center. The symbols are actually sharing keys with letters with support from two additional modifiers.
+2. Additional usesful keys are added. For example, use one key to create a new next line and move to its beginning when your cursor is in the middle of a line or to delete a word or the entire line.
+2. It includes multiple layers to handle different situations, for example, a layer that works almost the same as Vim in its normal mode. For example, one can type 2, d and d to delete two lines in Vim. With this, one can do it anywhere! No software is needed.
+3. The keyboard will constantly communicate with the OS to perform more user-friendly operations. For example, the keyboard will behave differently based on the current focused application and OS. If you press the moving-back-a-word key, the keyboard will translate it to a shortcut that the current software can recognize. The OS will also change its state, for example, switching the input source, based on the current layer. Please note the the main purpose of this repository is to provide a hardware independent solution, but a GUI manager runs on the OS can also provide additional support when possible.
+4. Multiple keyboards can share internal states (current layer, current modifieres, all settings, etc.). This can occasionaly be useful when using multiple keyboards.
+6. Some features such as key repeating are now handled by the keyboard instead of the OS to provide more customized experience.
+7. It also have some details to help improve typing. For example, some keys will be disabled based on the position of the previously pressed modifier key to guide the user to efficiently use both hands. For a keyboard with a split spacebar, one of the space key may be disabled.
 ##
 # Structure
 ## keyboard/*/keymap.c
@@ -38,14 +34,9 @@ This code implements a GUI keyboard manager using PyQt.
 ## computer/install.h
 This code installs the keyboard manager, handling all details.
 # Future Work
-I really want to do an automatic keyboard layout search for coding. This requires two things. One is an accurate enough model of hands and their movement. The other is a lot of data. The second one is apparently easy. The first one should not be very hard but I don't have time yet.
-# My Favourite Keyboards
-## New Poker
-![New Poker](keyboard/new_poker/keyboard.jpg)
-There are several versions of Poker. My one is New Poker and the picture above is New Poker II. The New Poker seems to have the most freedom in customizing the keymap. However, I replaced its PCB with a DZ60 with QMK support in the end.
-## Matrix Noah
-![Matrix Noah](keyboard/matrix_noah/keyboard.jpg)
-I am very lucky to have a Matrix Noah with an old version of PCB which supports split spacebar. I tried different keymaps to make my thumbs more useful in typing with split spacebar, although I am not sure if they actually worked. I am showing a white one but I have a black one.
-## Canoe Gen2
+All the above layout designs are empirical. I am planning to use data to automatically discover layouts that are best for computer programmers.
+# Introduction to Custom Keyboards
+These keyboards are generally more carefully designed. You usually have to buy several parts and put them together yourself, which means you can choose your own keycaps and switches. The below picture is a new custom keyboard called Canoe Gen2 produced by Percent Studio.
 ![Canoe Gen2](keyboard/canoe_gen2/keyboard.jpg)
-I am still waiting for the shipment. It's hard to modify it for a split spacebar, which is the reason I am not using split spacebars for other functions anymore.
+Some other keyboards are more unique in their designs. They try to solve the drawbacks by completely changing how a keyboard looks like. The below picture is a new ergonomic keyboard called Moonlander Mark 1 produced by ZSA Technology Labs.
+![Canoe Gen2](https://www.zsa.io/static/b42dcd715c76bd330737b385b2a218a6/0838a/1-hero-white.webp)
