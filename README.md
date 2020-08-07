@@ -6,7 +6,7 @@ This repository includes keyboard firmware code (C and C++) to largely enhance Q
 2. (, -, +, Enter, ↑, ←, ↓, → and Backspace are among the most used keys for programmers, but reaching them requires large hand movement from the home row.
 3. The workload on each finger is not balanced. The two thumbs are only responsible for one spacebar, while the right pinky finger has to press too many frequent keys. This could potentially cause errors.
 4. Keys for moving to the previous or next word, moving to the beginning or end of the line or erasing the current word don't even exist. These keys can be useful for fast coding. I know some shortcuts may work, but they vary in different OSs or even applications or require too many key presses. It would be good to provide a unified and easy solution.
-5. Some useful features like double tapping are missing. It would be good if I can go to the end of the document by double tap the page down key. It's much more intuitive than shortcuts. If would be even better if we can have marcos, command repeating and other advanced features.
+5. Some useful features like double tapping are missing. It would be good if I can go to the end of the document by double tap the page down key. It's much more intuitive than shortcuts. It would be even better if we can have marcos, command repeating and other advanced features.
 6. The staggered alignment came from old typewriters. This design no longer makes senses on modern keyboards and it makes some keys hard to reach.
 7. The two hands are too close which is an unnatural posture. 
 ## Existing Solutions
