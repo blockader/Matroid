@@ -1,8 +1,14 @@
-# Matroid
-This repo includes keyboard firmware code (C and C++) to largely enhance QMK-based (an open-source keyboard firmware project) customized keyboards and GUI software (Python and PyQt) to manage them. In a word, it adds a lot of advanced features to a keyboard. The configuration is very personal but the code can easily be reused for those who are familiar with QMK. All code is designed to work on MacOS, Linux and Windows without modification. But some implementation is still on the way. This is an ongoing project out of pure interest. I am also planning to work on keyboard hardware in the future. The goal would be split keyboards.
+# Introduction
+This repository includes keyboard firmware code (C and C++) to largely enhance QMK-based (an open-source keyboard firmware project) customized keyboards and GUI software (Python and PyQt) to manage them. In a word, it adds several useful features to a keyboard. The configuration is personal but the code can easily be reused for those who are familiar with QMK. This is an ongoing project out of interest. I am also planning to work on keyboard hardware in the future.
+
 # Motivation
-## What are the drawbacks of the common keyboards and software?
-1. The pinky fingers are under too much burden, especially the right one, and the thumbs are too free. Two thumbs are only responsible for one spacebar while the rest of your fingers are dancing quickly.
+## The Drawbacks of Normal Keyboards
+1. The positions of alphabet keys are not optimized for high-speed typing.
+2. (, -, +, Enter, ↑, ←, ↓ and → are among the most used keys for programmers, but reaching them requires large hand movement from the home row.
+4. The workload on each finger is not balanced. The two thumbs are only responsible for one spacebar, while the right pinky finger has to press too many frequent keys. This could potentially cause errors.
+5. The staggered alignment came from old typewriters. This design no longer makes senses on modern keyboards and it makes some keys hard to reach.
+
+
 2. Some useful keys such as arrow keys are too far to reach. And keys for moving to the previous/next word, moving to the beginning or end of the line and erasing the whole line don't even exist. These keys can be useful for fast coding. I know some shortcuts may work, but they vary in different OSs or even applications and are not handy. It would be good to provide a unified solution. And in many cases like writing email, taking a note or using the terminal, Vim may not be available.
 3. Two hands are too close to make long time typing not comfortable.
 4. The keys are not aligned. This is not a clever design but merely path dependency.
