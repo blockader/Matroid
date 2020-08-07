@@ -1,19 +1,20 @@
 # Introduction
 This repository includes keyboard firmware code (C and C++) to largely enhance QMK-based (an open-source keyboard firmware project) customized keyboards and GUI software (Python and PyQt) to manage them. In a word, it adds several useful features to a keyboard. The configuration is personal but the code can easily be reused for those who are familiar with QMK. This is an ongoing project out of interest. I am also planning to work on keyboard hardware in the future.
-
 # Motivation
 ## The Drawbacks of Normal Keyboards
 1. The positions of alphabet keys are not optimized for high-speed typing.
 2. (, -, +, Enter, ↑, ←, ↓ and → are among the most used keys for programmers, but reaching them requires large hand movement from the home row.
-4. The workload on each finger is not balanced. The two thumbs are only responsible for one spacebar, while the right pinky finger has to press too many frequent keys. This could potentially cause errors.
-5. The staggered alignment came from old typewriters. This design no longer makes senses on modern keyboards and it makes some keys hard to reach.
+3. The workload on each finger is not balanced. The two thumbs are only responsible for one spacebar, while the right pinky finger has to press too many frequent keys. This could potentially cause errors.
+4. Keys for moving to the previous or next word, moving to the beginning or end of the line and erasing the whole line don't even exist. These keys can be useful for fast coding. I know some shortcuts may work, but they vary in different OSs or even applications and are not handy. It would be good to provide a unified solution.
+5. Some useful features like double tapping are missing. It would be good if I can go to the end of the document by double tap the page down key. It's much more intuitive than shortcuts. If would be even better if we can have marcos, command repeating and other advanced features.
+6. The staggered alignment came from old typewriters. This design no longer makes senses on modern keyboards and it makes some keys hard to reach.
+7. The two hands are too close which is an unnatural posture. 
+## Existing Solutions
+1. Vim, Emacs and other similar software can solve some of the above problems. Although with the help of plugins, Vim can be used in other applications, they are still available in limited applications. I want to have the same typing experience when I am writing an email, using the terminal and even taking notes with keyboard connecting to an iPad.
 
 
-2. Some useful keys such as arrow keys are too far to reach. And keys for moving to the previous/next word, moving to the beginning or end of the line and erasing the whole line don't even exist. These keys can be useful for fast coding. I know some shortcuts may work, but they vary in different OSs or even applications and are not handy. It would be good to provide a unified solution. And in many cases like writing email, taking a note or using the terminal, Vim may not be available.
-3. Two hands are too close to make long time typing not comfortable.
-4. The keys are not aligned. This is not a clever design but merely path dependency.
-5. The locations of the keys are designed to slow down typing. See Colemak or Dvorak.
-6. Some useful features like double tapping are missing. When I double tapping the page down key in my keyboard, it actually goes to the end of the document. Although this is not necessary, I find it very interesting and user-friendly. If your have a custmized keyboard with QMK support, then you can write you own C code to achieve this and more.
+
+
 ## What should we do?
 As a computer programmer, I type a lot every day. So the efficiency matters. There are many ways to solve some of these problems. I am doing things in the firmware. Please check out Karabiner-Elements for hardware independent solution. Vim and Emacs with careful configuration can also help in some cases. The advantage of modifying the firmware is that you don't have to develop and install any software on a new computer/OS to make most things work. I can easily plug my keyboard in an iPad and start to take notes with my keyboard features. Although a few advanced functions do require a keyboard manager I implemented below.
 
