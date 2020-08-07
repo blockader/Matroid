@@ -1,5 +1,5 @@
 # Introduction
-This repository includes keyboard firmware code (C and C++) to largely enhance QMK-based (an open-source keyboard firmware project) custom keyboards and GUI software (Python and PyQt) to manage them. In a word, it adds several useful features to a keyboard. The configuration is personal but the code can easily be reused for those who are familiar with QMK. This is an ongoing project out of interest. I am also planning to work on keyboard hardware in the future.
+This repository includes keyboard firmware code (C and C++) to largely enhance QMK-based (an open-source keyboard firmware project) custom keyboards and GUI software (Python and PyQt) to manage them. In a word, it adds several useful features to a keyboard. The configuration is personal but the code can easily be reused for those who are familiar with QMK. This is an ongoing project out of interest.
 # Motivation
 ## The Drawbacks of Normal Keyboards
 1. The positions of alphabet keys are not optimized for high-speed typing.
@@ -34,7 +34,7 @@ This code implements a GUI keyboard manager using PyQt.
 ## computer/install.h
 This code installs the keyboard manager, handling all details.
 # Future Work
-All the above layout designs are empirical. I am planning to use data to automatically discover layouts that are best for computer programmers.
+All the above layout designs are empirical. I am planning to use data to automatically discover layouts that are best for computer programmers. I am also planning to work on keyboard hardware in the future.
 # Introduction to Custom Keyboards
 These keyboards are generally more carefully designed. You usually have to buy several parts and put them together yourself, which means you can choose your own keycaps and switches. The below picture is a new custom keyboard called Canoe Gen2 produced by Percent Studio.
 ![Canoe Gen2](keyboard/canoe_gen2/keyboard.jpg)
