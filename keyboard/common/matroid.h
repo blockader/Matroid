@@ -1028,14 +1028,16 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
         }
         return false;
     case KEY_PASTE:
-        switch (common_layer_data.os) {
-        case MACOS:
-            tap_code16(LGUI(KC_V));
-            break;
-        case LINUX:
-        case WINDOWS:
-            tap_code16(LCTL(KC_V));
-            break;
+        if (record->event.pressed) {
+            switch (common_layer_data.os) {
+            case MACOS:
+                tap_code16(LGUI(KC_V));
+                break;
+            case LINUX:
+            case WINDOWS:
+                tap_code16(LCTL(KC_V));
+                break;
+            }
         }
     }
     if (key >= SAFE_RANGE + NUMBER_OF_LAYERS &&
