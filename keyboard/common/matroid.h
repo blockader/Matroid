@@ -16,6 +16,7 @@ enum {
     LAYER_CONTROL,
     LAYER_WINDOW,
     LAYER_DESKTOP,
+    LAYER_OS,
     NUMBER_OF_LAYERS,
 };
 
@@ -25,7 +26,7 @@ bool temporary[NUMBER_OF_LAYERS] = {
     [LAYER_GAME_BASE] = false,   [LAYER_GAME_EXTENSION] = true,
     [LAYER_LEGACY_BASE] = false, [LAYER_LEGACY_EXTENSION] = true,
     [LAYER_CONTROL] = false,     [LAYER_WINDOW] = true,
-    [LAYER_DESKTOP] = false,
+    [LAYER_DESKTOP] = false,     [LAYER_OS] = true,
 };
 
 uint8_t layers[16];
@@ -34,6 +35,7 @@ enum OS {
     MACOS,
     LINUX,
     WINDOWS,
+    NUMBER_OF_OSS,
 };
 
 enum Application {
@@ -62,6 +64,7 @@ struct {
 } layer_window_data;
 
 #define KEY_FORWARD_LAYER(a) SAFE_RANGE + a
+#define KEY_SWITCH_OS(a) SAFE_RANGE + NUMBER_OF_LAYERS + a
 
 enum {
     DANCE_PGDN_BOTTOM,
@@ -83,7 +86,7 @@ qk_tap_dance_action_t tap_dance_actions[] = {
 #define TRAIT_RIGHT(a) a
 
 enum custom_keycodes {
-    KEY_BACK_LAYER = SAFE_RANGE + NUMBER_OF_LAYERS,
+    KEY_BACK_LAYER = SAFE_RANGE + NUMBER_OF_LAYERS + NUMBER_OF_OSS,
     KEY_INSERT_LINE_START,
     KEY_INSERT_HERE,
     KEY_INSERT_LINE_END,
@@ -95,6 +98,9 @@ enum custom_keycodes {
     KEY_CUT_LINE,
     KEY_CUT_SELECTION,
     KEY_MOVE_LINE_STRAT,
+    KEY_LEFT_COMMAND,
+    KEY_RIGHT_COMMAND,
+    KEY_PASTE,
 };
 
 struct message {
@@ -974,6 +980,67 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             } else
                 tap_code16(KC_ENT);
         }
+        return false;
+    case KEY_LEFT_COMMAND:
+        if (record->event.pressed) {
+            switch (common_layer_data.os) {
+            case MACOS:
+                register_code(KC_LGUI);
+                break;
+            case LINUX:
+            case WINDOWS:
+                register_code(KC_LCTL);
+                break;
+            }
+        } else {
+            switch (common_layer_data.os) {
+            case MACOS:
+                unregister_code(KC_LGUI);
+                break;
+            case LINUX:
+            case WINDOWS:
+                unregister_code(KC_LCTL);
+                break;
+            }
+        }
+        return false;
+    case KEY_RIGHT_COMMAND:
+        if (record->event.pressed) {
+            switch (common_layer_data.os) {
+            case MACOS:
+                register_code(KC_RGUI);
+                break;
+            case LINUX:
+            case WINDOWS:
+                register_code(KC_RCTL);
+                break;
+            }
+        } else {
+            switch (common_layer_data.os) {
+            case MACOS:
+                unregister_code(KC_RGUI);
+                break;
+            case LINUX:
+            case WINDOWS:
+                unregister_code(KC_RCTL);
+                break;
+            }
+        }
+        return false;
+    case KEY_PASTE:
+        switch (common_layer_data.os) {
+        case MACOS:
+            tap_code16(LGUI(KC_V));
+            break;
+        case LINUX:
+        case WINDOWS:
+            tap_code16(LCTL(KC_V));
+            break;
+        }
+    }
+    if (key >= SAFE_RANGE + NUMBER_OF_LAYERS &&
+        key < SAFE_RANGE + NUMBER_OF_LAYERS + NUMBER_OF_OSS) {
+        common_layer_data.os = key - SAFE_RANGE - NUMBER_OF_LAYERS;
         return false;
     }
     return true;
