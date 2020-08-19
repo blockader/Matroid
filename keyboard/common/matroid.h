@@ -9,13 +9,10 @@ enum {
     LAYER_NORM_EXTENSION,
     LAYER_RACE_BASE,
     LAYER_RACE_EXTENSION,
-    LAYER_GAME_BASE,
-    LAYER_GAME_EXTENSION,
     LAYER_LEGACY_BASE,
     LAYER_LEGACY_EXTENSION,
     LAYER_CONTROL,
     LAYER_WINDOW,
-    LAYER_DESKTOP,
     LAYER_OS,
     NUMBER_OF_LAYERS,
 };
@@ -23,10 +20,9 @@ enum {
 bool temporary[NUMBER_OF_LAYERS] = {
     [LAYER_NORM_BASE] = false,   [LAYER_NORM_EXTENSION] = true,
     [LAYER_RACE_BASE] = false,   [LAYER_RACE_EXTENSION] = true,
-    [LAYER_GAME_BASE] = false,   [LAYER_GAME_EXTENSION] = true,
     [LAYER_LEGACY_BASE] = false, [LAYER_LEGACY_EXTENSION] = true,
     [LAYER_CONTROL] = false,     [LAYER_WINDOW] = true,
-    [LAYER_DESKTOP] = false,     [LAYER_OS] = true,
+    [LAYER_OS] = true,
 };
 
 uint8_t layers[16];
@@ -656,16 +652,32 @@ void handle_layer_start(uint16_t key, keyrecord_t *record) {
         m.arguments = "english";
         send_message(&m);
     case LAYER_RACE_EXTENSION:
+#if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
+        ergodox_led_all_set(0);
+        ergodox_right_led_1_set(255);
+#else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_BLUE);
         rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+#endif
         return;
     case LAYER_LEGACY_BASE:
     case LAYER_LEGACY_EXTENSION:
+#if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
+        ergodox_led_all_set(0);
+        ergodox_right_led_3_set(255);
+#else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_GREEN);
         rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+#endif
         return;
+    case LAYER_WINDOW:
+#if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
+        ergodox_led_all_set(0);
+        ergodox_right_led_2_set(255);
+#else
+#endif
     case LAYER_CONTROL:
         layer_control_data.operator= - 1;
         layer_control_data.multiplier = 0;
@@ -689,16 +701,32 @@ void handle_layer_return(void) {
     switch (layers[layers[0] + 1]) {
     case LAYER_RACE_BASE:
     case LAYER_RACE_EXTENSION:
+#if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
+        ergodox_led_all_set(0);
+        ergodox_right_led_1_set(255);
+#else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_BLUE);
         rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+#endif
         return;
     case LAYER_LEGACY_BASE:
     case LAYER_LEGACY_EXTENSION:
+#if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
+        ergodox_led_all_set(0);
+        ergodox_right_led_3_set(255);
+#else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_GREEN);
         rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
+#endif
         return;
+    case LAYER_WINDOW:
+#if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
+        ergodox_led_all_set(0);
+        ergodox_right_led_2_set(255);
+#else
+#endif
     case LAYER_CONTROL:
         layer_control_data.operator= - 1;
         layer_control_data.multiplier = 0;

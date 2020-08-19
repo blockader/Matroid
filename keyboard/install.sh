@@ -8,6 +8,8 @@ if [ $1 == new_poker ]; then
     alias=dz60
 elif [ $1 == matrix_noah ]; then
     alias=matrix/noah
+elif [ $1 == ergodox_ez ]; then
+    alias=ergodox_ez
 else
     echo $1 is not a supported keyboard.
 fi
@@ -63,6 +65,9 @@ elif [ $keyboard == new_poker ]; then
         echo $os is not a supported OS.
         exit 1
     fi
+elif [ $keyboard == ergodox_ez ]; then
+    echo The firmware for Ergodox EZ can\'t be automatically uploaded. You need to implement it using the CLI version of Wally. # TODO
+    echo Please upload the firmware using Wally.
 else
     echo $1 is not a supported keyboard.
 fi
