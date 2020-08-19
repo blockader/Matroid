@@ -630,14 +630,6 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
             return true;
         }
         return true;
-    case LAYER_DESKTOP:
-        switch (key) {
-        case KEY_BACK_LAYER:
-            if (record->event.pressed)
-                tap_code16(LCTL(KC_UP));
-            return true;
-        }
-        return true;
     }
     return true;
 }
@@ -653,8 +645,10 @@ void handle_layer_start(uint16_t key, keyrecord_t *record) {
         send_message(&m);
     case LAYER_RACE_EXTENSION:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_led_all_set(0);
-        ergodox_right_led_1_set(255);
+        ergodox_right_led_1_on();
+        ergodox_right_led_1_set(127);
+        ergodox_right_led_2_off();
+        ergodox_right_led_3_off();
 #else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_BLUE);
@@ -664,8 +658,10 @@ void handle_layer_start(uint16_t key, keyrecord_t *record) {
     case LAYER_LEGACY_BASE:
     case LAYER_LEGACY_EXTENSION:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_led_all_set(0);
-        ergodox_right_led_3_set(255);
+        ergodox_right_led_1_off();
+        ergodox_right_led_2_off();
+        ergodox_right_led_3_on();
+        ergodox_right_led_3_set(127);
 #else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_GREEN);
@@ -674,24 +670,22 @@ void handle_layer_start(uint16_t key, keyrecord_t *record) {
         return;
     case LAYER_WINDOW:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_led_all_set(0);
-        ergodox_right_led_2_set(255);
+        ergodox_right_led_1_off();
+        ergodox_right_led_2_on();
+        ergodox_right_led_2_set(127);
+        ergodox_right_led_3_off();
 #else
 #endif
+        register_code(KC_LGUI);
+        tap_code(KC_TAB);
+        layer_window_data.start_time = timer_read();
+        return;
     case LAYER_CONTROL:
         layer_control_data.operator= - 1;
         layer_control_data.multiplier = 0;
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_RED);
         rgblight_mode_noeeprom(RGBLIGHT_MODE_STATIC_LIGHT);
-        return;
-    case LAYER_WINDOW:
-        register_code(KC_LGUI);
-        tap_code(KC_TAB);
-        layer_window_data.start_time = timer_read();
-        return;
-    case LAYER_DESKTOP:
-        tap_code16(LCTL(KC_UP));
         return;
     }
 }
@@ -702,8 +696,10 @@ void handle_layer_return(void) {
     case LAYER_RACE_BASE:
     case LAYER_RACE_EXTENSION:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_led_all_set(0);
-        ergodox_right_led_1_set(255);
+        ergodox_right_led_1_on();
+        ergodox_right_led_1_set(127);
+        ergodox_right_led_2_off();
+        ergodox_right_led_3_off();
 #else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_BLUE);
@@ -713,8 +709,10 @@ void handle_layer_return(void) {
     case LAYER_LEGACY_BASE:
     case LAYER_LEGACY_EXTENSION:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_led_all_set(0);
-        ergodox_right_led_3_set(255);
+        ergodox_right_led_1_off();
+        ergodox_right_led_2_off();
+        ergodox_right_led_3_on();
+        ergodox_right_led_3_set(127);
 #else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_GREEN);
@@ -723,8 +721,10 @@ void handle_layer_return(void) {
         return;
     case LAYER_WINDOW:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_led_all_set(0);
-        ergodox_right_led_2_set(255);
+        ergodox_right_led_1_off();
+        ergodox_right_led_2_on();
+        ergodox_right_led_2_set(127);
+        ergodox_right_led_3_off();
 #else
 #endif
     case LAYER_CONTROL:
@@ -757,10 +757,19 @@ bool handle_call_key(uint16_t key, keyrecord_t *record) {
     case KEY_BACK_LAYER:
         if (record->event.pressed) {
             if (layers[0]) {
-                handle_layer_end();
-                --layers[0];
-                update_layer();
-                handle_layer_return();
+                if (temporary[layers[layers[0] + 1] && layers[0] > 1]) {
+                    --layers[0];
+                    handle_layer_end();
+                    --layers[0];
+                    handle_layer_return();
+                    ++layers[0];
+                    layers[layers[0] + 1] = layers[layers[0] + 2];
+                } else {
+                    handle_layer_end();
+                    --layers[0];
+                    update_layer();
+                    handle_layer_return();
+                }
             }
         }
         return false;
@@ -1214,15 +1223,11 @@ bool process_record_user(uint16_t key, keyrecord_t *record) {
         raw_hid_send((uint8_t *)send_message_buffer, RAW_EPSIZE);
         return false;
     }
-    if (!handle_handness_start(key, record))
-        return false;
     if (!handle_layer_key(key, record))
         return false;
     if (!handle_call_key(key, record))
         return false;
     if (!handle_common_key(key, record))
-        return false;
-    if (!handle_handness_end(key, record))
         return false;
     if (!handle_repeat_key(key, record))
         return false;
