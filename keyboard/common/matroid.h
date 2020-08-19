@@ -635,7 +635,13 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
 }
 
 void handle_layer_start(uint16_t key, keyrecord_t *record) {
+#if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
+    ergodox_right_led_1_off();
+    ergodox_right_led_2_off();
+    ergodox_right_led_3_off();
+#else
     rgblight_disable_noeeprom();
+#endif
     struct message m;
     switch (layers[layers[0] + 1]) {
     case LAYER_RACE_BASE:
@@ -647,8 +653,6 @@ void handle_layer_start(uint16_t key, keyrecord_t *record) {
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
         ergodox_right_led_1_on();
         ergodox_right_led_1_set(127);
-        ergodox_right_led_2_off();
-        ergodox_right_led_3_off();
 #else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_BLUE);
@@ -658,8 +662,6 @@ void handle_layer_start(uint16_t key, keyrecord_t *record) {
     case LAYER_LEGACY_BASE:
     case LAYER_LEGACY_EXTENSION:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_right_led_1_off();
-        ergodox_right_led_2_off();
         ergodox_right_led_3_on();
         ergodox_right_led_3_set(127);
 #else
@@ -670,10 +672,6 @@ void handle_layer_start(uint16_t key, keyrecord_t *record) {
         return;
     case LAYER_WINDOW:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_right_led_1_off();
-        ergodox_right_led_2_on();
-        ergodox_right_led_2_set(127);
-        ergodox_right_led_3_off();
 #else
 #endif
         register_code(KC_LGUI);
@@ -691,15 +689,19 @@ void handle_layer_start(uint16_t key, keyrecord_t *record) {
 }
 
 void handle_layer_return(void) {
+#if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
+    ergodox_right_led_1_off();
+    ergodox_right_led_2_off();
+    ergodox_right_led_3_off();
+#else
     rgblight_disable_noeeprom();
+#endif
     switch (layers[layers[0] + 1]) {
     case LAYER_RACE_BASE:
     case LAYER_RACE_EXTENSION:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
         ergodox_right_led_1_on();
         ergodox_right_led_1_set(127);
-        ergodox_right_led_2_off();
-        ergodox_right_led_3_off();
 #else
         rgblight_enable_noeeprom();
         rgblight_sethsv_noeeprom(HSV_BLUE);
@@ -709,8 +711,6 @@ void handle_layer_return(void) {
     case LAYER_LEGACY_BASE:
     case LAYER_LEGACY_EXTENSION:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_right_led_1_off();
-        ergodox_right_led_2_off();
         ergodox_right_led_3_on();
         ergodox_right_led_3_set(127);
 #else
@@ -721,10 +721,6 @@ void handle_layer_return(void) {
         return;
     case LAYER_WINDOW:
 #if VENDOR_ID == 0xFEED && PRODUCT_ID == 0x1307
-        ergodox_right_led_1_off();
-        ergodox_right_led_2_on();
-        ergodox_right_led_2_set(127);
-        ergodox_right_led_3_off();
 #else
 #endif
     case LAYER_CONTROL:
