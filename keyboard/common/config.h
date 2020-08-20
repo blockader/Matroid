@@ -9,7 +9,3 @@
 #endif
 #define TAPPING_TERM 200
 #define TAP_CODE_DELAY 10
-
-#define NO_ACTION_MACRO
-#define NO_ACTION_FUNCTION
-#define NO_ACTION_ONESHOT
