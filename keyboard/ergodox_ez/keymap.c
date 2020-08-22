@@ -459,6 +459,30 @@ bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
             common_layer_data.last_repeat_interval = 500;
             break;
         case KC_Z:
+            switch (common_layer_data.os) {
+            case MACOS:
+                if (get_mods() & ~MOD_MASK_SHIFT &&
+                    (get_mods() & ~MOD_MASK_SHIFT & MOD_MASK_GUI) ==
+                        (get_mods() & ~MOD_MASK_SHIFT)) {
+                    common_layer_data.last_repeat_key = key;
+                    common_layer_data.last_repeat_time = timer_read();
+                    common_layer_data.last_repeat_interval = 500;
+                } else
+                    common_layer_data.last_repeat_key = 0;
+                break;
+            case LINUX:
+            case WINDOWS:
+                if (get_mods() & ~MOD_MASK_SHIFT &&
+                    (get_mods() & ~MOD_MASK_SHIFT & MOD_MASK_CTRL) ==
+                        (get_mods() & ~MOD_MASK_SHIFT)) {
+                    common_layer_data.last_repeat_key = key;
+                    common_layer_data.last_repeat_time = timer_read();
+                    common_layer_data.last_repeat_interval = 500;
+                } else
+                    common_layer_data.last_repeat_key = 0;
+                break;
+            }
+            break;
         case KC_X:
         case KC_V:
             switch (common_layer_data.os) {
@@ -603,8 +627,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_NO, KC_NO
     ),
     [LAYER_WINDOW] = KEYMAP_PERMUTE(
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KEY_BACK_LAYER,
+        KEY_BACK_LAYER, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
@@ -615,7 +639,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_LEFT, KC_NO, KC_NO, KC_RIGHT, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
+        KEY_BACK_LAYER, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO,
         KC_NO,
         KC_NO, KC_NO, KC_NO
