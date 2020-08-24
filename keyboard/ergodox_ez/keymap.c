@@ -73,6 +73,8 @@ enum custom_keycodes {
     KEY_DELETE_WORD,
     KEY_DELETE_LINE,
     KEY_CREATE_NEXT_LINE,
+    KEY_CPP_BODY,
+    KEY_CPP_SIZE,
 };
 
 void keyboard_post_init_user() {
@@ -238,6 +240,81 @@ bool handle_call_key(uint16_t key, keyrecord_t *record) {
         }
         return false;
     }
+    return true;
+}
+
+bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
+    if (record->event.pressed) {
+        switch (key) {
+        case KC_BSPC:
+        case KC_UP:
+        case KC_DOWN:
+        case KC_LEFT:
+        case KC_RIGHT:
+            common_layer_data.last_repeat_key = key;
+            common_layer_data.last_repeat_time = timer_read();
+            common_layer_data.last_repeat_interval = 500;
+            break;
+        case KC_Z:
+            switch (common_layer_data.os) {
+            case MACOS:
+                if (get_mods() & ~MOD_MASK_SHIFT &&
+                    (get_mods() & ~MOD_MASK_SHIFT & MOD_MASK_GUI) ==
+                        (get_mods() & ~MOD_MASK_SHIFT)) {
+                    common_layer_data.last_repeat_key = key;
+                    common_layer_data.last_repeat_time = timer_read();
+                    common_layer_data.last_repeat_interval = 500;
+                } else
+                    common_layer_data.last_repeat_key = 0;
+                break;
+            case LINUX:
+            case WINDOWS:
+                if (get_mods() & ~MOD_MASK_SHIFT &&
+                    (get_mods() & ~MOD_MASK_SHIFT & MOD_MASK_CTRL) ==
+                        (get_mods() & ~MOD_MASK_SHIFT)) {
+                    common_layer_data.last_repeat_key = key;
+                    common_layer_data.last_repeat_time = timer_read();
+                    common_layer_data.last_repeat_interval = 500;
+                } else
+                    common_layer_data.last_repeat_key = 0;
+                break;
+            }
+            break;
+        case KC_X:
+        case KC_V:
+            switch (common_layer_data.os) {
+            case MACOS:
+                if (get_mods() && (get_mods() & MOD_MASK_GUI) == get_mods()) {
+                    common_layer_data.last_repeat_key = key;
+                    common_layer_data.last_repeat_time = timer_read();
+                    common_layer_data.last_repeat_interval = 500;
+                } else
+                    common_layer_data.last_repeat_key = 0;
+                break;
+            case LINUX:
+            case WINDOWS:
+                if (get_mods() && (get_mods() & MOD_MASK_CTRL) == get_mods()) {
+                    common_layer_data.last_repeat_key = key;
+                    common_layer_data.last_repeat_time = timer_read();
+                    common_layer_data.last_repeat_interval = 500;
+                } else
+                    common_layer_data.last_repeat_key = 0;
+                break;
+            }
+            break;
+        case KC_C:
+            if (get_mods() && (get_mods() & MOD_MASK_CTRL) == get_mods()) {
+                common_layer_data.last_repeat_key = key;
+                common_layer_data.last_repeat_time = timer_read();
+                common_layer_data.last_repeat_interval = 500;
+            } else
+                common_layer_data.last_repeat_key = 0;
+            break;
+        default:
+            common_layer_data.last_repeat_key = 0;
+        }
+    } else if (common_layer_data.last_repeat_key == key)
+        common_layer_data.last_repeat_key = 0;
     return true;
 }
 
@@ -437,6 +514,24 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
                 break;
             }
         return false;
+    case KEY_CPP_BODY:
+        if (record->event.pressed)
+            switch (common_layer_data.os) {
+            case MACOS:
+                tap_code16(LGUI(KC_RIGHT));
+                tap_code16(KC_LCBR);
+                tap_code(KC_ENTER);
+                break;
+            case LINUX:
+                break;
+            case WINDOWS:
+                break;
+            }
+        return false;
+    case KEY_CPP_SIZE:
+        if (record->event.pressed)
+            SEND_STRING(".size()");
+        return false;
     }
     if (key >= SAFE_RANGE + NUMBER_OF_LAYERS &&
         key < SAFE_RANGE + NUMBER_OF_LAYERS + NUMBER_OF_OSS) {
@@ -446,89 +541,14 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
     return true;
 }
 
-bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
-    if (record->event.pressed) {
-        switch (key) {
-        case KC_BSPC:
-        case KC_UP:
-        case KC_DOWN:
-        case KC_LEFT:
-        case KC_RIGHT:
-            common_layer_data.last_repeat_key = key;
-            common_layer_data.last_repeat_time = timer_read();
-            common_layer_data.last_repeat_interval = 500;
-            break;
-        case KC_Z:
-            switch (common_layer_data.os) {
-            case MACOS:
-                if (get_mods() & ~MOD_MASK_SHIFT &&
-                    (get_mods() & ~MOD_MASK_SHIFT & MOD_MASK_GUI) ==
-                        (get_mods() & ~MOD_MASK_SHIFT)) {
-                    common_layer_data.last_repeat_key = key;
-                    common_layer_data.last_repeat_time = timer_read();
-                    common_layer_data.last_repeat_interval = 500;
-                } else
-                    common_layer_data.last_repeat_key = 0;
-                break;
-            case LINUX:
-            case WINDOWS:
-                if (get_mods() & ~MOD_MASK_SHIFT &&
-                    (get_mods() & ~MOD_MASK_SHIFT & MOD_MASK_CTRL) ==
-                        (get_mods() & ~MOD_MASK_SHIFT)) {
-                    common_layer_data.last_repeat_key = key;
-                    common_layer_data.last_repeat_time = timer_read();
-                    common_layer_data.last_repeat_interval = 500;
-                } else
-                    common_layer_data.last_repeat_key = 0;
-                break;
-            }
-            break;
-        case KC_X:
-        case KC_V:
-            switch (common_layer_data.os) {
-            case MACOS:
-                if (get_mods() && (get_mods() & MOD_MASK_GUI) == get_mods()) {
-                    common_layer_data.last_repeat_key = key;
-                    common_layer_data.last_repeat_time = timer_read();
-                    common_layer_data.last_repeat_interval = 500;
-                } else
-                    common_layer_data.last_repeat_key = 0;
-                break;
-            case LINUX:
-            case WINDOWS:
-                if (get_mods() && (get_mods() & MOD_MASK_CTRL) == get_mods()) {
-                    common_layer_data.last_repeat_key = key;
-                    common_layer_data.last_repeat_time = timer_read();
-                    common_layer_data.last_repeat_interval = 500;
-                } else
-                    common_layer_data.last_repeat_key = 0;
-                break;
-            }
-            break;
-        case KC_C:
-            if (get_mods() && (get_mods() & MOD_MASK_CTRL) == get_mods()) {
-                common_layer_data.last_repeat_key = key;
-                common_layer_data.last_repeat_time = timer_read();
-                common_layer_data.last_repeat_interval = 500;
-            } else
-                common_layer_data.last_repeat_key = 0;
-            break;
-        default:
-            common_layer_data.last_repeat_key = 0;
-        }
-    } else if (common_layer_data.last_repeat_key == key)
-        common_layer_data.last_repeat_key = 0;
-    return true;
-}
-
 bool process_record_user(uint16_t key, keyrecord_t *record) {
     if (!handle_layer_key(key, record))
         return false;
     if (!handle_call_key(key, record))
         return false;
-    if (!handle_common_key(key, record))
-        return false;
     if (!handle_repeat_key(key, record))
+        return false;
+    if (!handle_common_key(key, record))
         return false;
     return true;
 }
@@ -567,7 +587,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_ESC, KC_J, KC_L, KC_U, KC_Y, KC_SCLN, KC_LCBR,
         KC_H, KC_N, KC_E, KC_I, KC_O, KEY_FORWARD_LAYER(LAYER_NORM_EXTENSION),
         LOPT(KC_SPC), KC_K, KC_M, KC_COMM, KC_DOT, KC_QUOT, KC_RSFT,
-        KC_SPC, KC_PGDN, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
+        KC_SPC, KEY_CPP_BODY, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
         KC_NO, KC_NO,
         KC_NO,
         KC_NO, KC_NO, KC_LPRN
@@ -585,7 +605,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_EQL, KC_PLUS, KC_MINUS, KC_EXLM, KC_COLN, KC_RCBR,
         KC_LEFT, KC_DOWN, KC_UP, KC_RIGHT, KC_GRAVE, KEY_FORWARD_LAYER(LAYER_NORM_EXTENSION),
         KC_NO, KC_ASTR, KC_SLSH, KC_LT, KC_GT, KC_DQUO, KC_RSFT,
-        KC_TAB, LGUI(KC_DOWN), KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
+        KC_TAB, KEY_CPP_SIZE, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
         KC_NO, KC_NO,
         KC_NO,
         KC_NO, KC_NO, KC_RPRN
@@ -647,7 +667,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYER_UTILITY] = KEYMAP_PERMUTE(
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
-        KC_NO, KC_VOLD, KC_VOLU, LGUI(LSFT(KC_4)), KC_NO, KC_NO,
+        KC_NO, KC_VOLD, KC_VOLU, LGUI(LSFT(KC_4)), KEY_DANCE(DANCE_PGDN_BOTTOM), KEY_DANCE(DANCE_PGUP_TOP),
         KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_NO, KC_NO, KC_NO, KC_MPLY,
         KC_NO, KC_NO,
