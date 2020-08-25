@@ -73,8 +73,8 @@ enum custom_keycodes {
     KEY_DELETE_WORD,
     KEY_DELETE_LINE,
     KEY_CREATE_NEXT_LINE,
-    KEY_CPP_BODY,
-    KEY_CPP_SIZE,
+    KEY_CREATE_CPP_STATEMENT,
+    KEY_CREATE_CPP_BODY,
 };
 
 void keyboard_post_init_user() {
@@ -514,7 +514,21 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
                 break;
             }
         return false;
-    case KEY_CPP_BODY:
+    case KEY_CREATE_CPP_STATEMENT:
+        if (record->event.pressed)
+            switch (common_layer_data.os) {
+            case MACOS:
+                tap_code16(LGUI(KC_RIGHT));
+                tap_code(KC_SCLN);
+                tap_code(KC_ENTER);
+                break;
+            case LINUX:
+                break;
+            case WINDOWS:
+                break;
+            }
+        return false;
+    case KEY_CREATE_CPP_BODY:
         if (record->event.pressed)
             switch (common_layer_data.os) {
             case MACOS:
@@ -527,10 +541,6 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case WINDOWS:
                 break;
             }
-        return false;
-    case KEY_CPP_SIZE:
-        if (record->event.pressed)
-            SEND_STRING(".size()");
         return false;
     }
     if (key >= SAFE_RANGE + NUMBER_OF_LAYERS &&
@@ -587,7 +597,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_ESC, KC_J, KC_L, KC_U, KC_Y, KC_SCLN, KC_LCBR,
         KC_H, KC_N, KC_E, KC_I, KC_O, KEY_FORWARD_LAYER(LAYER_NORM_EXTENSION),
         LOPT(KC_SPC), KC_K, KC_M, KC_COMM, KC_DOT, KC_QUOT, KC_RSFT,
-        KC_SPC, KEY_CPP_BODY, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
+        KC_SPC, KEY_CREATE_CPP_STATEMENT, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
         KC_NO, KC_NO,
         KC_NO,
         KC_NO, KC_NO, KC_LPRN
@@ -605,7 +615,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_EQL, KC_PLUS, KC_MINUS, KC_EXLM, KC_COLN, KC_RCBR,
         KC_LEFT, KC_DOWN, KC_UP, KC_RIGHT, KC_GRAVE, KEY_FORWARD_LAYER(LAYER_NORM_EXTENSION),
         KC_NO, KC_ASTR, KC_SLSH, KC_LT, KC_GT, KC_DQUO, KC_RSFT,
-        KC_TAB, KEY_CPP_SIZE, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
+        KC_TAB, KEY_CREATE_CPP_BODY, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
         KC_NO, KC_NO,
         KC_NO,
         KC_NO, KC_NO, KC_RPRN
