@@ -79,9 +79,7 @@ enum {
     NUMBER_OF_KEYS,
 };
 
-void keyboard_post_init_user() {
-    rgblight_disable_noeeprom();
-}
+void keyboard_post_init_user() { rgblight_disable_noeeprom(); }
 
 struct message {
     int32_t session_id;
