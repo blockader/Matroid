@@ -245,14 +245,29 @@ bool handle_call_key(uint16_t key, keyrecord_t *record) {
 
 bool repeatable(uint16_t key) {
     switch (key) {
-    case KC_ENT:
     case KC_LEFT:
     case KC_DOWN:
     case KC_UP:
     case KC_RIGHT:
     case KC_BSPC:
+    case KC_ENT:
     case KC_TAB:
+    case KEY_MOVE_PREVIOUS_WORD:
+    case KEY_MOVE_NEXT_WORD:
+    case KEY_DELETE_WORD:
         return true;
+    case KC_C:
+        return get_mods() && (get_mods() & MOD_MASK_CTRL) == get_mods();
+    case KC_X:
+    case KC_V:
+        switch (common_layer_data.os) {
+        case MACOS:
+            return get_mods() && (get_mods() & MOD_MASK_GUI) == get_mods();
+        case LINUX:
+        case WINDOWS:
+            return get_mods() && (get_mods() & MOD_MASK_CTRL) == get_mods();
+        }
+        return false;
     case KC_Z:
         switch (common_layer_data.os) {
         case MACOS:
@@ -266,21 +281,8 @@ bool repeatable(uint16_t key) {
                        (get_mods() & ~MOD_MASK_SHIFT);
         }
         return false;
-    case KC_X:
-    case KC_V:
-        switch (common_layer_data.os) {
-        case MACOS:
-            return get_mods() && (get_mods() & MOD_MASK_GUI) == get_mods();
-        case LINUX:
-        case WINDOWS:
-            return get_mods() && (get_mods() & MOD_MASK_CTRL) == get_mods();
-        }
-        return false;
-    case KC_C:
-        return get_mods() && (get_mods() & MOD_MASK_CTRL) == get_mods();
-    default:
-        return false;
     }
+    return false;
 }
 
 bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
@@ -289,7 +291,7 @@ bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
             common_layer_data.last_repeat_key = key;
             common_layer_data.last_repeat_time = timer_read();
             common_layer_data.last_repeat_interval = 500;
-            common_layer_data.record = *record;
+            common_layer_data.last_repeat_record = *record;
         }
     } else if (common_layer_data.last_repeat_key == key)
         common_layer_data.last_repeat_key = 0;
