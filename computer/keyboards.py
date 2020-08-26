@@ -4,6 +4,24 @@ from PyQt5 import QtCore
 
 keyboards = [
     easydict.EasyDict(
+        name='Ergodox EZ',
+        layout_traits=[],
+        standard_keymap=None,
+        vendor_id=0xFEED,
+        product_id=0x1307,
+        interface=None,
+        interface_mutex=QtCore.QMutex(QtCore.QMutex.Recursive),
+        heartbeat_session_id=-1,
+        heartbeat_session_id_mutex=QtCore.QMutex(),
+        handness_session_id=-1,
+        handness_session_id_mutex=QtCore.QMutex(),
+        backlight_session_id=-1,
+        backlight_session_id_mutex=QtCore.QMutex(),
+        menu=None,
+        actions=easydict.EasyDict(),
+        actions_mutex=QtCore.QMutex()
+    ),
+    easydict.EasyDict(
         name='Matrix Noah',
         layout_traits=['split_left_shift'],
         standard_keymap=None,
