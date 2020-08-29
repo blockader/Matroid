@@ -338,7 +338,7 @@ def hourly_routine():
 
 break_dialog = QtWidgets.QMessageBox()
 break_dialog.setInformativeText(
-    'You should take a break to relax your body, clear your mind and schedule things. Remeber laziness is efficiency.')
+    'Are you doing the thing with the highest priority? Can you postpone or cancel the current thing?')
 break_dialog.setWindowFlags(
     QtCore.Qt.WindowStaysOnTopHint)
 
