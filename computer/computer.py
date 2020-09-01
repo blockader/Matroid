@@ -349,7 +349,7 @@ def show_break_dialog():
 
 
 hourly_routine_timer = timer(60 * 60, hourly_routine)
-hourly_routine_timer.triggered.connect(show_break_dialog)
+# hourly_routine_timer.triggered.connect(show_break_dialog)
 
 
 def daily_routine():
