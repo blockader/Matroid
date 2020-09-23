@@ -43,6 +43,10 @@ struct {
 } common_layer_data;
 
 struct {
+    bool tab_disabled;
+} layer_norm_extension_data;
+
+struct {
     int start_time;
 } layer_window_data;
 
@@ -156,6 +160,23 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
 
 bool handle_layer_key(uint16_t key, keyrecord_t *record) {
     switch (layers[layers[0] + 1]) {
+    case LAYER_NORM_EXTENSION:
+        switch (key) {
+        case KC_QUES:
+        case KC_EXLM:
+        case KC_COLN:
+        case KC_DQUO:
+            if (record->event.pressed)
+                layer_norm_extension_data.tab_disabled = true;
+            return true;
+        case KC_TAB:
+            if (record->event.pressed && layer_norm_extension_data.tab_disabled) {
+                tap_code(KC_SPC);
+                return false;
+            }
+            return true;
+        }
+        return true;
     case LAYER_WINDOW:
         switch (key) {
         case SAFE_RANGE + LAYER_WINDOW:
@@ -176,6 +197,9 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
 
 void handle_layer_start(void) {
     switch (layers[layers[0] + 1]) {
+    case LAYER_NORM_EXTENSION:
+        layer_norm_extension_data.tab_disabled = false;
+        return;
     case LAYER_WINDOW:
         register_code(KC_LGUI);
         tap_code(KC_TAB);
