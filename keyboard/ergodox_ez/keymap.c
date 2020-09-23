@@ -170,7 +170,8 @@ bool handle_layer_key(uint16_t key, keyrecord_t *record) {
                 layer_norm_extension_data.tab_disabled = true;
             return true;
         case KC_TAB:
-            if (record->event.pressed && layer_norm_extension_data.tab_disabled) {
+            if (record->event.pressed &&
+                layer_norm_extension_data.tab_disabled) {
                 tap_code(KC_SPC);
                 return false;
             }
