@@ -10,6 +10,8 @@ elif [ $1 == matrix_noah ]; then
     alias=matrix/noah
 elif [ $1 == ergodox_ez ]; then
     alias=ergodox_ez
+elif [ $1 == moonlander ]; then
+    alias=moonlander
 else
     echo $1 is not a supported keyboard.
 fi
@@ -67,6 +69,9 @@ elif [ $keyboard == new_poker ]; then
     fi
 elif [ $keyboard == ergodox_ez ]; then
     echo The firmware for Ergodox EZ can\'t be automatically uploaded. You need to implement it using the CLI version of Wally. # TODO
+    echo Please upload the firmware using Wally.
+elif [ $keyboard == moonlander ]; then
+    echo The firmware for Moonlander can\'t be automatically uploaded. You need to implement it using the CLI version of Wally. # TODO
     echo Please upload the firmware using Wally.
 else
     echo $1 is not a supported keyboard.

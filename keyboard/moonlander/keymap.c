@@ -80,6 +80,8 @@ enum {
     KEY_CREATE_NEXT_LINE,
     KEY_CREATE_CPP_STATEMENT,
     KEY_CREATE_CPP_BODY,
+    KEY_CREATE_LATEX_LEFT,
+    KEY_CREATE_LATEX_RIGHT,
     NUMBER_OF_KEYS,
 };
 
@@ -548,6 +550,25 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
                 break;
             }
         return false;
+    case KEY_CREATE_LATEX_LEFT:
+        if (record->event.pressed) {
+            tap_code(KC_BSLS);
+            tap_code(KC_L);
+            tap_code(KC_E);
+            tap_code(KC_F);
+            tap_code(KC_T);
+        }
+        return false;
+    case KEY_CREATE_LATEX_RIGHT:
+        if (record->event.pressed) {
+            tap_code(KC_BSLS);
+            tap_code(KC_R);
+            tap_code(KC_I);
+            tap_code(KC_G);
+            tap_code(KC_H);
+            tap_code(KC_T);
+        }
+        return false;
     }
     if (key >= SAFE_RANGE + NUMBER_OF_LAYERS &&
         key < SAFE_RANGE + NUMBER_OF_LAYERS + NUMBER_OF_OSS) {
@@ -587,7 +608,32 @@ void matrix_scan_user() {
     }
 }
 
-#define KEYMAP_PERMUTE LAYOUT_ergodox
+#define KEYMAP_PERMUTE( \
+    k00, k01, k02, k03,k04, k05, k06, \
+    k10, k11, k12, k13, k14, k15, k16, \
+    k20, k21, k22, k23, k24, k25, \
+    k30, k31, k32, k33, k34, k35, k36, \
+    k40, k41, k42, k43, k44, \
+    k55, k56, \
+    k54, \
+    k53, k52, k51, \
+    k07, k08, k09, k0A, k0B, k0C, k0D, \
+    k17, k18, k19, k1A, k1B, k1C, k1D, \
+    k28, k29, k2A, k2B, k2C, k2D, \
+    k37, k38, k39, k3A, k3B, k3C, k3D, \
+    k49, k4A, k4B, k4C, k4D, \
+    k57, k58, \
+    k59, \
+    k5C, k5B, k5A\
+) \
+LAYOUT_moonlander( \
+    k00, k01, k02, k03, k04, k05, k06, k07, k08, k09, k0A, k0B, k0C, k0D, \
+    k10, k11, k12, k13, k14, k15, k16, k17, k18, k19, k1A, k1B, k1C, k1D, \
+    k20, k21, k22, k23, k24, k25, k36, k37, k28, k29, k2A, k2B, k2C, k2D, \
+    k30, k31, k32, k33, k34, k35, k38, k39, k3A, k3B, k3C, k3D, \
+    k40, k41, k42, k43, k44, KC_NO, KC_NO, k49, k4A, k4B, k4C, k4D, \
+    k53, k54, k51, k5C, k59, k5A \
+) \
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     [LAYER_NORM_BASE] = KEYMAP_PERMUTE(
@@ -597,7 +643,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LSFT, KC_Z, KC_X, KC_C, KC_V, KC_B, KC_CAPS,
         KEY_LEFT_COMMAND, KEY_LEFT_CONTROL, KC_LALT, KC_DEL, KC_BSPC,
         KC_NO, KC_NO,
-        KC_NO,
+        KEY_CREATE_LATEX_LEFT,
         KC_LBRC, KC_NO, KC_NO,
         KEY_FORWARD_LAYER(LAYER_UTILITY), KC_6, KC_7, KC_8, KC_9, KC_0, KC_NO,
         KC_ESC, KC_J, KC_L, KC_U, KC_Y, KC_SCLN, KC_LCBR,
@@ -605,7 +651,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         LOPT(KC_SPC), KC_K, KC_M, KC_COMM, KC_DOT, KC_QUOT, KC_RSFT,
         KC_SPC, KEY_CREATE_CPP_STATEMENT, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
         KC_NO, KC_NO,
-        KC_NO,
+        KEY_CREATE_LATEX_RIGHT,
         KC_NO, KC_NO, KC_LPRN
     ),
     [LAYER_NORM_EXTENSION] = KEYMAP_PERMUTE(
@@ -615,7 +661,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_LSFT, KC_DLR, KC_HASH, KC_BSLS, KC_TILD, KC_UNDS, KC_NO,
         KEY_LEFT_COMMAND, KEY_LEFT_CONTROL, KC_LALT, KEY_DELETE_LINE, KEY_DELETE_WORD,
         KC_NO, KC_NO,
-        KC_NO,
+        KEY_CREATE_LATEX_LEFT,
         KC_RBRC, KC_NO, KC_NO,
         KEY_FORWARD_LAYER(LAYER_FUNCTION), KC_NO, KC_NO, KC_NO, KC_NO, KC_NO, KC_NO,
         KC_NO, KC_EQL, KC_PLUS, KC_MINUS, KC_EXLM, KC_COLN, KC_RCBR,
@@ -623,7 +669,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_NO, KC_ASTR, KC_SLSH, KC_LT, KC_GT, KC_DQUO, KC_RSFT,
         KC_TAB, KEY_CREATE_CPP_BODY, KC_RALT, KEY_RIGHT_CONTROL, KEY_RIGHT_COMMAND,
         KC_NO, KC_NO,
-        KC_NO,
+        KEY_CREATE_LATEX_RIGHT,
         KC_NO, KC_NO, KC_RPRN
     ),
     [LAYER_OS] = KEYMAP_PERMUTE(
