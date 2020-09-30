@@ -509,6 +509,25 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
                 break;
             }
         return false;
+    case KC_ENT:
+        if (get_mods() & MOD_MASK_SHIFT) {
+            if (record->event.pressed)
+                switch (common_layer_data.os) {
+                case MACOS:
+                    unregister_code(KC_LSFT);
+                    unregister_code(KC_RSFT);
+                    tap_code16(LGUI(KC_LEFT));
+                    tap_code(KC_ENTER);
+                    tap_code(KC_UP);
+                    break;
+                case LINUX:
+                    break;
+                case WINDOWS:
+                    break;
+                }
+            return false;
+        }
+        return true;
     case KEY_CREATE_NEXT_LINE:
         if (record->event.pressed)
             switch (common_layer_data.os) {
