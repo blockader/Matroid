@@ -321,7 +321,11 @@ bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
             common_layer_data.last_repeat_interval = 500;
             common_layer_data.last_repeat_record = *record;
         }
-    } else if (common_layer_data.last_repeat_key == key)
+    } else if (common_layer_data.last_repeat_key &&
+               (common_layer_data.last_repeat_key == key || key == KC_LGUI ||
+                key == KC_RGUI || key == KC_LCTL || key == KC_RCTL ||
+                key == KC_LSFT || key == KC_RSFT ||
+                (key >= SAFE_RANGE && key < SAFE_RANGE + NUMBER_OF_LAYERS)))
         common_layer_data.last_repeat_key = 0;
     return true;
 }
@@ -600,9 +604,9 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
 bool process_record_user(uint16_t key, keyrecord_t *record) {
     if (!handle_layer_key(key, record))
         return false;
-    if (!handle_call_key(key, record))
-        return false;
     if (!handle_repeat_key(key, record))
+        return false;
+    if (!handle_call_key(key, record))
         return false;
     if (!handle_common_key(key, record))
         return false;
