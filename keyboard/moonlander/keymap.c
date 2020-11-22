@@ -41,7 +41,7 @@ enum {
 struct {
     uint8_t os, application;
     uint16_t last_repeat_key;
-    int last_nonspace_time, last_repeat_time, last_repeat_interval;
+    int last_repeat_time, last_repeat_interval;
     keyrecord_t last_repeat_record;
 } common_layer_data;
 
@@ -317,6 +317,9 @@ bool repeatable(uint16_t key) {
 }
 
 bool handle_repeat_key(uint16_t key, keyrecord_t *record) {
+    if (layers[layers[0] + 1] == LAYER_GAME_BASE ||
+        layers[layers[0] + 1] == LAYER_GAME_EXTENSION)
+        return true;
     if (record->event.pressed) {
         if (repeatable(key) && !common_layer_data.last_repeat_key) {
             common_layer_data.last_repeat_key = key;
