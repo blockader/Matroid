@@ -439,6 +439,7 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code16(LCTL(KC_LEFT));
                 break;
             }
         return false;
@@ -451,6 +452,7 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code16(LCTL(KC_RIGHT));
                 break;
             }
         return false;
@@ -470,6 +472,7 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code(KC_HOME);
                 break;
             }
         return false;
@@ -489,6 +492,7 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code(KC_END);
                 break;
             }
         return false;
@@ -502,6 +506,7 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code16(LCTL(KC_BSPC));
                 break;
             }
         return false;
@@ -516,6 +521,9 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code(KC_END);
+                tap_code16(LSFT(KC_HOME));
+                tap_code(KC_BSPC);
                 break;
             }
         return false;
@@ -533,6 +541,11 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
                 case LINUX:
                     break;
                 case WINDOWS:
+                    unregister_code(KC_LSFT);
+                    unregister_code(KC_RSFT);
+                    tap_code(KC_HOME);
+                    tap_code(KC_ENTER);
+                    tap_code(KC_UP);
                     break;
                 }
             return false;
@@ -548,6 +561,8 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code(KC_END);
+                tap_code(KC_ENTER);
                 break;
             }
         return false;
@@ -562,6 +577,9 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code(KC_END);
+                tap_code(KC_SCLN);
+                tap_code(KC_ENTER);
                 break;
             }
         return false;
@@ -576,6 +594,9 @@ bool handle_common_key(uint16_t key, keyrecord_t *record) {
             case LINUX:
                 break;
             case WINDOWS:
+                tap_code(KC_END);
+                tap_code16(KC_LCBR);
+                tap_code(KC_ENTER);
                 break;
             }
         return false;
