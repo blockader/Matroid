@@ -208,8 +208,18 @@ void handle_layer_start(void) {
         layer_norm_extension_data.tab_disabled = false;
         return;
     case LAYER_WINDOW:
-        register_code(KC_LGUI);
-        tap_code(KC_TAB);
+        switch (common_layer_data.os) {
+        case MACOS:
+            register_code(KC_LGUI);
+            tap_code(KC_TAB);
+            break;
+        case LINUX:
+            break;
+        case WINDOWS:
+            register_code(KC_LALT);
+            tap_code(KC_TAB);
+            break;
+        }
         layer_window_data.start_time = timer_read();
         return;
     }
@@ -218,7 +228,16 @@ void handle_layer_start(void) {
 void handle_layer_end(void) {
     switch (layers[layers[0] + 1]) {
     case LAYER_WINDOW:
-        unregister_code(KC_LGUI);
+        switch (common_layer_data.os) {
+        case MACOS:
+            unregister_code(KC_LGUI);
+            break;
+        case LINUX:
+            break;
+        case WINDOWS:
+            unregister_code(KC_LALT);
+            break;
+        }
         temporary[LAYER_WINDOW] = false;
         return;
     }
